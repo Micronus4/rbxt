@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RBX Timelines Hub</title>
+    <title>RBX Timelines</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
@@ -34,7 +34,7 @@
                     <rect x="50" y="42" width="8" height="8" fill="#1e1b4b" transform="rotate(18 54 46)"/>
                 </svg>
                 <div>
-                    <h1 class="text-3xl font-bold text-white tracking-tight">RBX Timelines Hub</h1>
+                    <h1 class="text-3xl font-bold text-white tracking-tight">RBX Timelines</h1>
                     <p class="text-gray-400 text-sm">Real-time multiplayer account tracking matrix.</p>
                 </div>
             </div>
@@ -51,7 +51,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Account</label>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Username</label>
                         <input type="text" id="form-account" placeholder="e.g. RobloxPlayer1" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                     </div>
                     <div>
@@ -93,19 +93,19 @@
                         
                         <div class="flex flex-col items-center">
                             <span class="text-[9px] text-gray-500 font-semibold uppercase mb-0.5 select-none tracking-tight">hrs</span>
-                            <input type="text" id="input-hour" value="--" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
+                            <input type="text" id="input-hour" value="12" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
                         </div>
                         <span class="text-gray-600 font-bold select-none pb-1.5">:</span>
 
                         <div class="flex flex-col items-center">
                             <span class="text-[9px] text-gray-500 font-semibold uppercase mb-0.5 select-none tracking-tight">min</span>
-                            <input type="text" id="input-minute" value="--" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
+                            <input type="text" id="input-minute" value="00" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
                         </div>
                         <span class="text-gray-600 font-bold select-none pb-1.5">:</span>
 
                         <div class="flex flex-col items-center">
                             <span class="text-[9px] text-gray-500 font-semibold uppercase mb-0.5 select-none tracking-tight">sec</span>
-                            <input type="text" id="input-second" value="--" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
+                            <input type="text" id="input-second" value="00" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
                         </div>
 
                         <div class="flex items-center space-x-1 pl-2 border-l border-gray-700 h-[34px] mb-0.5">
@@ -116,7 +116,7 @@
                 </div>
 
                 <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                    <button type="button" id="submit-btn" class="w-full md:w-64 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-md">Save Entry</button>
+                    <button type="button" id="submit-btn" disabled class="w-full md:w-64 bg-gray-700 text-gray-500 font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-none cursor-not-allowed">Save Entry</button>
                 </div>
             </div>
         </div>
@@ -125,7 +125,7 @@
             <table class="min-w-full divide-y divide-gray-700 text-left text-sm">
                 <thead class="bg-gray-800 text-gray-300 uppercase text-xs font-semibold tracking-wider">
                     <tr>
-                        <th class="px-6 py-4">Account</th>
+                        <th class="px-6 py-4">Username</th>
                         <th class="px-6 py-4">Display Name</th>
                         <th class="px-6 py-4">Join Date</th>
                         <th class="px-6 py-4">Account Age</th>
@@ -142,23 +142,91 @@
         let accountDataMap = JSON.parse(localStorage.getItem('rbx_timeline_data')) || {};
         let maxTrackableId = 8200000000; 
         let activeAmPm = "AM";
+        let isEditingTableCell = false;
+
+        const MIN_TRACKABLE_ID = 16;
+        const MIN_JOIN_DATE = new Date(2005, 4, 22);
 
         const locales = {
             "en-US": {
-                huhTitle: "Huh?",
-                huhMsg: "I can't find any data to work off of. Please input the necessary data to proceed.",
                 malfunctionTitle: "Data Malfunction",
                 pastError: "Oh, changin' the past now, are we? Unfortunately, Roblox was released on May 22nd, 2005. Nice try.",
                 futureError: "Time Travel Detected. Please refrain from destabilizing the Space-Time Continuum. Thank You.",
                 exceedError: (parsed, max) => `Anachronism Warning! The Account ID ${parsed} does not exist yet. Maximum allowable index is ${max}.`,
+                minIdError: (parsed) => `Invalid ID! Account IDs must be at least ${MIN_TRACKABLE_ID}. The value entered (${parsed}) is not permitted.`,
                 violationError: (parsed, max) => `Timeline Violation! The ID entered (${parsed}) exceeds the limit of ${max}. Reverting value.`,
             }
         };
+
+        const submitBtnEnabledClass = "w-full md:w-64 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-md cursor-pointer";
+        const submitBtnDisabledClass = "w-full md:w-64 bg-gray-700 text-gray-500 font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-none cursor-not-allowed";
 
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
         function getLang() { return locales["en-US"]; }
         function saveToLocalStorage() { localStorage.setItem('rbx_timeline_data', JSON.stringify(accountDataMap)); }
+
+        function getMaxJoinDate() {
+            return new Date();
+        }
+
+        function isValidJoinDate(date) {
+            return date >= MIN_JOIN_DATE && date <= getMaxJoinDate();
+        }
+
+        function isValidAccountId(id) {
+            return id >= MIN_TRACKABLE_ID && id <= maxTrackableId;
+        }
+
+        function getFormDateTime() {
+            const year = document.getElementById('form-year').value;
+            const month = document.getElementById('form-month').value;
+            const day = document.getElementById('form-day').value;
+            const hRaw = document.getElementById('input-hour').value;
+            const mRaw = document.getElementById('input-minute').value;
+            const sRaw = document.getElementById('input-second').value;
+
+            if (!year || !month || !day || hRaw === '--' || mRaw === '--' || sRaw === '--') {
+                return null;
+            }
+
+            let h = parseInt(hRaw, 10);
+            let m = parseInt(mRaw, 10);
+            let s = parseInt(sRaw, 10);
+
+            if (isNaN(h) || isNaN(m) || isNaN(s)) return null;
+            if (h < 1 || h > 12 || m < 0 || m > 59 || s < 0 || s > 59) return null;
+
+            if (activeAmPm === "PM" && h < 12) h += 12;
+            if (activeAmPm === "AM" && h === 12) h = 0;
+
+            const combinedDateTimeString = `${year}-${month}-${day}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            const chosenDate = new Date(combinedDateTimeString);
+            return isNaN(chosenDate.getTime()) ? null : chosenDate;
+        }
+
+        function isFormValid() {
+            const account = document.getElementById('form-account').value.trim();
+            const display = document.getElementById('form-display').value.trim();
+            const idStr = document.getElementById('form-id').value.trim();
+
+            if (!account || !display || !idStr) return false;
+
+            const inputIdParsed = parseInt(idStr, 10);
+            if (!isValidAccountId(inputIdParsed)) return false;
+
+            const chosenDate = getFormDateTime();
+            if (!chosenDate || !isValidJoinDate(chosenDate)) return false;
+
+            return true;
+        }
+
+        function updateSubmitButtonState() {
+            const btn = document.getElementById('submit-btn');
+            const valid = isFormValid();
+            btn.disabled = !valid;
+            btn.className = valid ? submitBtnEnabledClass : submitBtnDisabledClass;
+        }
 
         function showErrorModal(messageHTML, title) {
             document.getElementById('error-modal-title').innerText = title;
@@ -181,6 +249,7 @@
 
             element.addEventListener('input', function() {
                 this.value = this.value.replace(/[^0-9]/g, '');
+                updateSubmitButtonState();
             });
 
             element.addEventListener('blur', function() {
@@ -190,6 +259,7 @@
                 } else {
                     this.value = String(currentNum).padStart(2, '0');
                 }
+                updateSubmitButtonState();
             });
         }
 
@@ -206,52 +276,111 @@
             }
         }
 
-        document.getElementById('form-year').addEventListener('change', function() {
-            const year = this.value;
+        function populateMonthDropdown(year, selectedMonth) {
             const monthSelect = document.getElementById('form-month');
-            const daySelect = document.getElementById('form-day');
-            daySelect.innerHTML = '<option value="">Select Month First</option>';
-            daySelect.disabled = true;
-
             if (!year) {
                 monthSelect.innerHTML = '<option value="">Select Year First</option>';
                 monthSelect.disabled = true;
                 return;
             }
             monthSelect.innerHTML = '<option value="">Month</option>';
+            const yearNum = parseInt(year, 10);
+            const now = new Date();
+            const minMonth = yearNum === 2005 ? 5 : 1;
+            const maxMonth = yearNum === now.getFullYear() ? now.getMonth() + 1 : 12;
             monthNames.forEach((name, idx) => {
-                monthSelect.insertAdjacentHTML('beforeend', `<option value="${String(idx + 1).padStart(2, '0')}">${name}</option>`);
+                const monthNum = idx + 1;
+                if (monthNum < minMonth || monthNum > maxMonth) return;
+                const val = String(monthNum).padStart(2, '0');
+                monthSelect.insertAdjacentHTML('beforeend', `<option value="${val}">${name}</option>`);
             });
             monthSelect.disabled = false;
-        });
+            if (selectedMonth) monthSelect.value = selectedMonth;
+        }
 
-        document.getElementById('form-month').addEventListener('change', function() {
-            const year = document.getElementById('form-year').value;
-            const month = this.value;
+        function populateDayDropdown(year, month, selectedDay) {
             const daySelect = document.getElementById('form-day');
-
-            if (!month) {
+            if (!year || !month) {
                 daySelect.innerHTML = '<option value="">Select Month First</option>';
                 daySelect.disabled = true;
                 return;
             }
             daySelect.innerHTML = '<option value="">Day</option>';
-            const totalDays = new Date(year, parseInt(month, 10), 0).getDate();
-            for (let d = 1; d <= totalDays; d++) {
-                daySelect.insertAdjacentHTML('beforeend', `<option value="${String(d).padStart(2, '0')}">${d}</option>`);
+            const yearNum = parseInt(year, 10);
+            const monthNum = parseInt(month, 10);
+            const now = new Date();
+            let minDay = 1;
+            let maxDay = new Date(yearNum, monthNum, 0).getDate();
+            if (yearNum === 2005 && monthNum === 5) minDay = 22;
+            if (yearNum === now.getFullYear() && monthNum === now.getMonth() + 1) maxDay = now.getDate();
+            for (let d = minDay; d <= maxDay; d++) {
+                const val = String(d).padStart(2, '0');
+                daySelect.insertAdjacentHTML('beforeend', `<option value="${val}">${d}</option>`);
             }
             daySelect.disabled = false;
+            if (selectedDay) daySelect.value = selectedDay;
+        }
+
+        function setDefaultDateToToday() {
+            const now = new Date();
+            const year = String(now.getFullYear());
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+
+            document.getElementById('form-year').value = year;
+            populateMonthDropdown(year, month);
+            populateDayDropdown(year, month, day);
+        }
+
+        function setDefaultTimeToMidnight() {
+            document.getElementById('input-hour').value = '12';
+            document.getElementById('input-minute').value = '00';
+            document.getElementById('input-second').value = '00';
+            activeAmPm = "AM";
+            document.getElementById('ampm-am').className = "px-2 py-1 text-[10px] font-bold rounded bg-blue-600 text-white transition-colors duration-150";
+            document.getElementById('ampm-pm').className = "px-2 py-1 text-[10px] font-bold rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors duration-150";
+        }
+
+        function resetFormDefaults() {
+            document.getElementById('form-account').value = '';
+            document.getElementById('form-display').value = '';
+            document.getElementById('form-id').value = '';
+            setDefaultDateToToday();
+            setDefaultTimeToMidnight();
+            updateSubmitButtonState();
+        }
+
+        document.getElementById('form-year').addEventListener('change', function() {
+            const year = this.value;
+            populateMonthDropdown(year, '');
+            populateDayDropdown('', '', '');
+            updateSubmitButtonState();
+        });
+
+        document.getElementById('form-month').addEventListener('change', function() {
+            const year = document.getElementById('form-year').value;
+            const month = this.value;
+            populateDayDropdown(year, month, '');
+            updateSubmitButtonState();
+        });
+
+        document.getElementById('form-day').addEventListener('change', updateSubmitButtonState);
+
+        ['form-account', 'form-display', 'form-id'].forEach(function(id) {
+            document.getElementById(id).addEventListener('input', updateSubmitButtonState);
         });
 
         document.getElementById('ampm-am').addEventListener('click', function() {
             activeAmPm = "AM";
             this.className = "px-2 py-1 text-[10px] font-bold rounded bg-blue-600 text-white transition-colors duration-150";
             document.getElementById('ampm-pm').className = "px-2 py-1 text-[10px] font-bold rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors duration-150";
+            updateSubmitButtonState();
         });
         document.getElementById('ampm-pm').addEventListener('click', function() {
             activeAmPm = "PM";
             this.className = "px-2 py-1 text-[10px] font-bold rounded bg-blue-600 text-white transition-colors duration-150";
             document.getElementById('ampm-am').className = "px-2 py-1 text-[10px] font-bold rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors duration-150";
+            updateSubmitButtonState();
         });
 
         function updateEstimatedMaxId() {
@@ -259,6 +388,7 @@
             const dynamicIdDelta = Math.floor((Date.now() - standardBaselineDate) * 35 / 1000);
             maxTrackableId = 7500000000 + dynamicIdDelta;
             document.getElementById('live-id-badge').innerText = maxTrackableId.toLocaleString();
+            updateSubmitButtonState();
         }
 
         function calculateAge(joinDateString) {
@@ -289,6 +419,8 @@
         }
 
         function renderTable() {
+            if (isEditingTableCell) return;
+
             const tableBody = document.getElementById('table-body');
             tableBody.innerHTML = ''; 
             const sortedItems = Object.keys(accountDataMap).map(k => ({ localKey: k, ...accountDataMap[k] })).sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
@@ -310,26 +442,63 @@
             });
         }
 
-        document.addEventListener('blur', function(e) {
-            if(e.target && e.target.classList.contains('edit-cell')) {
-                const localKey = e.target.getAttribute('data-key');
-                const field = e.target.getAttribute('data-field');
-                const newValue = e.target.innerText.trim();
-                const currentLg = getLang();
-                if (newValue && accountDataMap[localKey]) {
-                    if (field === 'id') {
-                        const parsedId = parseInt(newValue.replace(/[^0-9]/g, ''), 10);
-                        if (!parsedId || parsedId > maxTrackableId) {
-                            showErrorModal(currentLg.violationError((parsedId || 0).toLocaleString(), maxTrackableId.toLocaleString()), currentLg.huhTitle);
-                            e.target.innerText = accountDataMap[localKey].id;
-                            return;
-                        }
-                        accountDataMap[localKey].id = parsedId;
-                    } else {
-                        accountDataMap[localKey][field] = newValue;
-                    }
-                    saveToLocalStorage();
+        function saveEditCell(cell) {
+            const localKey = cell.getAttribute('data-key');
+            const field = cell.getAttribute('data-field');
+            const newValue = cell.innerText.trim();
+            const currentLg = getLang();
+            if (!newValue || !accountDataMap[localKey]) return true;
+
+            if (field === 'id') {
+                const parsedId = parseInt(newValue.replace(/[^0-9]/g, ''), 10);
+                if (!parsedId || parsedId < MIN_TRACKABLE_ID) {
+                    showErrorModal(currentLg.minIdError((parsedId || 0).toLocaleString()), "Timeline Violation");
+                    cell.innerText = accountDataMap[localKey].id;
+                    return false;
                 }
+                if (parsedId > maxTrackableId) {
+                    showErrorModal(currentLg.violationError(parsedId.toLocaleString(), maxTrackableId.toLocaleString()), "Timeline Violation");
+                    cell.innerText = accountDataMap[localKey].id;
+                    return false;
+                }
+                accountDataMap[localKey].id = parsedId;
+            } else {
+                accountDataMap[localKey][field] = newValue;
+            }
+            saveToLocalStorage();
+            return true;
+        }
+
+        document.addEventListener('focusin', function(e) {
+            if (e.target && e.target.classList.contains('edit-cell')) {
+                isEditingTableCell = true;
+            }
+        }, true);
+
+        document.addEventListener('focusout', function(e) {
+            if (e.target && e.target.classList.contains('edit-cell')) {
+                setTimeout(function() {
+                    const active = document.activeElement;
+                    if (!active || !active.classList.contains('edit-cell')) {
+                        isEditingTableCell = false;
+                        renderTable();
+                    }
+                }, 0);
+            }
+        }, true);
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target && e.target.classList.contains('edit-cell')) {
+                e.preventDefault();
+                if (saveEditCell(e.target)) {
+                    e.target.blur();
+                }
+            }
+        }, true);
+
+        document.addEventListener('blur', function(e) {
+            if (e.target && e.target.classList.contains('edit-cell')) {
+                saveEditCell(e.target);
             }
         }, true);
 
@@ -345,6 +514,8 @@
         });
 
         document.getElementById('submit-btn').addEventListener('click', function() {
+            if (this.disabled) return;
+
             const accountInput = document.getElementById('form-account');
             const displayInput = document.getElementById('form-display');
             const idInput = document.getElementById('form-id');
@@ -353,41 +524,20 @@
             const day = document.getElementById('form-day').value;
             const currentLg = getLang();
 
-            const dateProvided = (year && month && day);
-
-            // Read raw values
-            let hRaw = document.getElementById('input-hour').value;
-            let mRaw = document.getElementById('input-minute').value;
-            let sRaw = document.getElementById('input-second').value;
-
-            // Treat '--' as 0
-            let h = hRaw === '--' ? 0 : parseInt(hRaw, 10);
-            let m = mRaw === '--' ? 0 : parseInt(mRaw, 10);
-            let s = sRaw === '--' ? 0 : parseInt(sRaw, 10);
-
-            if (!accountInput.value || !displayInput.value || !dateProvided || !idInput.value) {
-                showErrorModal(currentLg.huhMsg, currentLg.huhTitle);
-                return;
-            }
-
-            if (isNaN(h)) h = 0;
-            if (isNaN(m)) m = 0;
-            if (isNaN(s)) s = 0;
-
-            if (activeAmPm === "PM" && h < 12) h += 12;
-            if (activeAmPm === "AM" && h === 12) h = 0;
-            
-            const cleanHour = String(h).padStart(2, '0');
-            const cleanMinute = String(m).padStart(2, '0');
-            const cleanSecond = String(s).padStart(2, '0');
-
-            const combinedDateTimeString = `${year}-${month}-${day}T${cleanHour}:${cleanMinute}:${cleanSecond}`;
-            const chosenDate = new Date(combinedDateTimeString);
+            const chosenDate = getFormDateTime();
             const inputIdParsed = parseInt(idInput.value, 10);
             const chronosText = "Chronos Directive Violation Detected";
 
-            if (chosenDate < new Date("2005-05-22T00:00:00")) { showErrorModal(currentLg.pastError, chronosText); return; }
-            if (chosenDate > new Date()) { showErrorModal(currentLg.futureError, chronosText); return; }
+            if (!chosenDate || !isValidJoinDate(chosenDate)) return;
+
+            const cleanHour = String(chosenDate.getHours()).padStart(2, '0');
+            const cleanMinute = String(chosenDate.getMinutes()).padStart(2, '0');
+            const cleanSecond = String(chosenDate.getSeconds()).padStart(2, '0');
+            const combinedDateTimeString = `${year}-${month}-${day}T${cleanHour}:${cleanMinute}:${cleanSecond}`;
+
+            if (chosenDate < MIN_JOIN_DATE) { showErrorModal(currentLg.pastError, chronosText); return; }
+            if (chosenDate > getMaxJoinDate()) { showErrorModal(currentLg.futureError, chronosText); return; }
+            if (inputIdParsed < MIN_TRACKABLE_ID) { showErrorModal(currentLg.minIdError(inputIdParsed.toLocaleString()), currentLg.malfunctionTitle); return; }
             if (inputIdParsed > maxTrackableId) { showErrorModal(currentLg.exceedError(inputIdParsed.toLocaleString(), maxTrackableId.toLocaleString()), currentLg.malfunctionTitle); return; }
 
             const localKey = 'id_' + Date.now();
@@ -395,19 +545,13 @@
 
             saveToLocalStorage();
             renderTable();
-
-            accountInput.value = ''; displayInput.value = ''; idInput.value = '';
-            document.getElementById('input-hour').value = '--';
-            document.getElementById('input-minute').value = '--';
-            document.getElementById('input-second').value = '--';
-            document.getElementById('form-year').value = '';
-            document.getElementById('form-month').innerHTML = '<option value="">Select Year First</option>';
-            document.getElementById('form-month').disabled = true;
-            document.getElementById('form-day').innerHTML = '<option value="">Select Month First</option>';
-            document.getElementById('form-day').disabled = true;
+            resetFormDefaults();
         });
 
         initDateDropdowns();
+        setDefaultDateToToday();
+        setDefaultTimeToMidnight();
+        updateSubmitButtonState();
         updateEstimatedMaxId();
         renderTable();
         setInterval(updateEstimatedMaxId, 2000);
