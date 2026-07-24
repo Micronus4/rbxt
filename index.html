@@ -49,30 +49,13 @@
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Date Selection</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="block text-[10px] text-gray-500 uppercase mb-1">Year</label>
-                            <select id="form-year" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 cursor-pointer"></select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-gray-500 uppercase mb-1">Month</label>
-                            <select id="form-month" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 cursor-pointer" disabled>
-                                <option value="">Select Year First</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-gray-500 uppercase mb-1">Day</label>
-                            <select id="form-day" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 cursor-pointer" disabled>
-                                <option value="">Select Month First</option>
-                            </select>
-                        </div>
-                    </div>
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Date Selection</h3>
+                    <input type="text" id="form-date" placeholder="e.g. August 13, 2022 or 8/13/2022" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
 
                 <div class="space-y-2 lg:col-span-2">
-                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Time Selection</h3>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Time Selection</h3>
                     
                     <div class="flex items-end justify-center space-x-2 bg-gray-900 p-2 rounded-lg border border-gray-700 h-[64px] max-w-[260px] mx-auto lg:mx-0">
                         
@@ -135,8 +118,6 @@
         const submitBtnEnabledClass = "w-full md:w-64 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-md cursor-pointer";
         const submitBtnDisabledClass = "w-full md:w-64 bg-gray-700 text-gray-500 font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-none cursor-not-allowed";
 
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
         function saveToLocalStorage() { localStorage.setItem('rbx_timeline_data', JSON.stringify(accountDataMap)); }
 
         function getMaxJoinDate() {
@@ -144,24 +125,44 @@
         }
 
         function isValidJoinDate(date) {
-            return date >= MIN_JOIN_DATE && date <= getMaxJoinDate();
+            return date && !isNaN(date.getTime()) && date >= MIN_JOIN_DATE && date <= getMaxJoinDate();
         }
 
         function isValidAccountId(id) {
             return id >= MIN_TRACKABLE_ID && id <= maxTrackableId;
         }
 
+        function parseAndFixDateString(str) {
+            if (!str) return { formattedStr: "", parsedDate: null };
+
+            let cleanStr = str.trim();
+
+            // Automatically add missing comma before 4-digit year when written out (e.g., "August 13 2022" -> "August 13, 2022")
+            cleanStr = cleanStr.replace(/([a-zA-Z]+\s+\d{1,2}(?:st|nd|rd|th)?)\s+(\d{4})/i, '$1, $2');
+
+            // Strip ordinal suffixes (e.g., "13th" -> "13") for reliable JS Date parsing
+            const parseableStr = cleanStr.replace(/(\d{1,2})(st|nd|rd|th)/i, '$1');
+
+            const parsedDate = new Date(parseableStr);
+
+            return {
+                formattedStr: cleanStr,
+                parsedDate: isNaN(parsedDate.getTime()) ? null : parsedDate
+            };
+        }
+
         function getFormDateTime() {
-            const year = document.getElementById('form-year').value;
-            const month = document.getElementById('form-month').value;
-            const day = document.getElementById('form-day').value;
+            const dateInputVal = document.getElementById('form-date').value;
             const hRaw = document.getElementById('input-hour').value;
             const mRaw = document.getElementById('input-minute').value;
             const sRaw = document.getElementById('input-second').value;
 
-            if (!year || !month || !day || hRaw === '--' || mRaw === '--' || sRaw === '--') {
+            if (!dateInputVal || hRaw === '--' || mRaw === '--' || sRaw === '--') {
                 return null;
             }
+
+            const { parsedDate } = parseAndFixDateString(dateInputVal);
+            if (!parsedDate) return null;
 
             let h = parseInt(hRaw, 10);
             let m = parseInt(mRaw, 10);
@@ -173,9 +174,8 @@
             if (activeAmPm === "PM" && h < 12) h += 12;
             if (activeAmPm === "AM" && h === 12) h = 0;
 
-            const combinedDateTimeString = `${year}-${month}-${day}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-            const chosenDate = new Date(combinedDateTimeString);
-            return isNaN(chosenDate.getTime()) ? null : chosenDate;
+            const finalDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), h, m, s);
+            return isNaN(finalDate.getTime()) ? null : finalDate;
         }
 
         function isFormValid() {
@@ -199,18 +199,6 @@
             const valid = isFormValid();
             btn.disabled = !valid;
             btn.className = valid ? submitBtnEnabledClass : submitBtnDisabledClass;
-        }
-
-        function clearDateDropdowns() {
-            document.getElementById('form-year').value = '';
-            
-            const monthSelect = document.getElementById('form-month');
-            monthSelect.innerHTML = '<option value="">Select Year First</option>';
-            monthSelect.disabled = true;
-
-            const daySelect = document.getElementById('form-day');
-            daySelect.innerHTML = '<option value="">Select Month First</option>';
-            daySelect.disabled = true;
         }
 
         function bindTimeValidations(inputId, limit) {
@@ -242,59 +230,12 @@
         bindTimeValidations('input-minute', 59);
         bindTimeValidations('input-second', 59);
 
-        function initDateDropdowns() {
-            const yearSelect = document.getElementById('form-year');
-            const currentYear = new Date().getFullYear();
-            yearSelect.innerHTML = '<option value="">Year</option>';
-            for (let y = currentYear; y >= 2005; y--) {
-                yearSelect.insertAdjacentHTML('beforeend', `<option value="${y}">${y}</option>`);
-            }
-        }
-
-        function populateMonthDropdown(year, selectedMonth) {
-            const monthSelect = document.getElementById('form-month');
-            if (!year) {
-                monthSelect.innerHTML = '<option value="">Select Year First</option>';
-                monthSelect.disabled = true;
-                return;
-            }
-            monthSelect.innerHTML = '<option value="">Month</option>';
-            const yearNum = parseInt(year, 10);
-            const now = new Date();
-            const minMonth = yearNum === 2005 ? 5 : 1;
-            const maxMonth = yearNum === now.getFullYear() ? now.getMonth() + 1 : 12;
-            monthNames.forEach((name, idx) => {
-                const monthNum = idx + 1;
-                if (monthNum < minMonth || monthNum > maxMonth) return;
-                const val = String(monthNum).padStart(2, '0');
-                monthSelect.insertAdjacentHTML('beforeend', `<option value="${val}">${name}</option>`);
-            });
-            monthSelect.disabled = false;
-            if (selectedMonth) monthSelect.value = selectedMonth;
-        }
-
-        function populateDayDropdown(year, month, selectedDay) {
-            const daySelect = document.getElementById('form-day');
-            if (!year || !month) {
-                daySelect.innerHTML = '<option value="">Select Month First</option>';
-                daySelect.disabled = true;
-                return;
-            }
-            daySelect.innerHTML = '<option value="">Day</option>';
-            const yearNum = parseInt(year, 10);
-            const monthNum = parseInt(month, 10);
-            const now = new Date();
-            let minDay = 1;
-            let maxDay = new Date(yearNum, monthNum, 0).getDate();
-            if (yearNum === 2005 && monthNum === 5) minDay = 22;
-            if (yearNum === now.getFullYear() && monthNum === now.getMonth() + 1) maxDay = now.getDate();
-            for (let d = minDay; d <= maxDay; d++) {
-                const val = String(d).padStart(2, '0');
-                daySelect.insertAdjacentHTML('beforeend', `<option value="${val}">${d}</option>`);
-            }
-            daySelect.disabled = false;
-            if (selectedDay) daySelect.value = selectedDay;
-        }
+        document.getElementById('form-date').addEventListener('input', updateSubmitButtonState);
+        document.getElementById('form-date').addEventListener('blur', function() {
+            const { formattedStr } = parseAndFixDateString(this.value);
+            this.value = formattedStr;
+            updateSubmitButtonState();
+        });
 
         function setDefaultTimeToMidnight() {
             document.getElementById('input-hour').value = '12';
@@ -309,26 +250,10 @@
             document.getElementById('form-account').value = '';
             document.getElementById('form-display').value = '';
             document.getElementById('form-id').value = '';
-            clearDateDropdowns();
+            document.getElementById('form-date').value = '';
             setDefaultTimeToMidnight();
             updateSubmitButtonState();
         }
-
-        document.getElementById('form-year').addEventListener('change', function() {
-            const year = this.value;
-            populateMonthDropdown(year, '');
-            populateDayDropdown('', '', '');
-            updateSubmitButtonState();
-        });
-
-        document.getElementById('form-month').addEventListener('change', function() {
-            const year = document.getElementById('form-year').value;
-            const month = this.value;
-            populateDayDropdown(year, month, '');
-            updateSubmitButtonState();
-        });
-
-        document.getElementById('form-day').addEventListener('change', updateSubmitButtonState);
 
         ['form-account', 'form-display', 'form-id'].forEach(function(id) {
             document.getElementById(id).addEventListener('input', updateSubmitButtonState);
@@ -404,7 +329,7 @@
                     <tr class="hover:bg-gray-800/50 transition-colors duration-150">
                         <td data-key="${item.localKey}" data-field="account" contenteditable="true" class="edit-cell px-6 py-4 font-medium text-white focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${item.account}</td>
                         <td data-key="${item.localKey}" data-field="display" contenteditable="true" class="edit-cell px-6 py-4 text-gray-300 focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${item.display}</td>
-                        <td class="px-6 py-4 text-gray-400 select-none">${formatter.format(new Date(item.joinDate))}</td>
+                        <td data-key="${item.localKey}" data-field="joinDate" contenteditable="true" class="edit-cell px-6 py-4 text-gray-400 focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${formatter.format(new Date(item.joinDate))}</td>
                         <td class="px-6 py-4 text-amber-400 font-mono text-xs select-none">${calculateAge(item.joinDate)}</td>
                         <td data-key="${item.localKey}" data-field="id" contenteditable="true" class="edit-cell px-6 py-4 text-gray-500 font-mono focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${item.id}</td>
                         <td class="px-6 py-4 text-center select-none">
@@ -428,6 +353,13 @@
                     return false;
                 }
                 accountDataMap[localKey].id = parsedId;
+            } else if (field === 'joinDate') {
+                const { parsedDate } = parseAndFixDateString(newValue);
+                if (!parsedDate || !isValidJoinDate(parsedDate)) {
+                    renderTable();
+                    return false;
+                }
+                accountDataMap[localKey].joinDate = parsedDate.toISOString();
             } else {
                 accountDataMap[localKey][field] = newValue;
             }
@@ -485,32 +417,21 @@
             const accountInput = document.getElementById('form-account');
             const displayInput = document.getElementById('form-display');
             const idInput = document.getElementById('form-id');
-            const year = document.getElementById('form-year').value;
-            const month = document.getElementById('form-month').value;
-            const day = document.getElementById('form-day').value;
 
             const chosenDate = getFormDateTime();
             const inputIdParsed = parseInt(idInput.value, 10);
 
             if (!chosenDate || !isValidJoinDate(chosenDate)) return;
-            if (chosenDate < MIN_JOIN_DATE || chosenDate > getMaxJoinDate()) return;
             if (inputIdParsed < MIN_TRACKABLE_ID || inputIdParsed > maxTrackableId) return;
 
-            const cleanHour = String(chosenDate.getHours()).padStart(2, '0');
-            const cleanMinute = String(chosenDate.getMinutes()).padStart(2, '0');
-            const cleanSecond = String(chosenDate.getSeconds()).padStart(2, '0');
-            const combinedDateTimeString = `${year}-${month}-${day}T${cleanHour}:${cleanMinute}:${cleanSecond}`;
-
             const localKey = 'id_' + Date.now();
-            accountDataMap[localKey] = { account: accountInput.value, display: displayInput.value, joinDate: combinedDateTimeString, id: idInput.value };
+            accountDataMap[localKey] = { account: accountInput.value, display: displayInput.value, joinDate: chosenDate.toISOString(), id: idInput.value };
 
             saveToLocalStorage();
             renderTable();
             resetFormDefaults();
         });
 
-        initDateDropdowns();
-        clearDateDropdowns();
         setDefaultTimeToMidnight();
         updateSubmitButtonState();
         updateEstimatedMaxId();
