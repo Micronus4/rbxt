@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Famous People Age Tracker</title>
+    <title>Longevity Database</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Smooth collapsing & dropping animation states - attached directly to parent */
         .dropdown-menu {
             opacity: 0;
             transform: scaleY(0);
@@ -19,7 +18,6 @@
             transform: scaleY(1);
             pointer-events: auto;
         }
-        /* Custom highlight styling for active editing fields */
         .editable-cell:focus {
             background-color: rgba(2, 6, 23, 0.9);
             outline: 2px solid #0891b2;
@@ -30,718 +28,965 @@
     </style>
 </head>
 <body class="bg-[#05070c] text-slate-300 min-h-screen antialiased selection:bg-cyan-600 selection:text-slate-200 font-mono">
-
-    <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 text-slate-300 relative">
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 text-slate-300 relative">
         
+        <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center space-x-4">
-                <img class="rounded-xl shadow-md border border-slate-800 object-cover shrink-0" width="56" height="56" src="https://pbs.twimg.com/media/DU-iN9dX4AAPLPA.jpg" alt="BTAS Logo">
+                <div class="w-12 h-12 rounded-xl bg-slate-900 border border-cyan-800/60 flex items-center justify-center text-cyan-400 shadow-md shrink-0">
+                    <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-200 tracking-tight font-mono">BTAS Character Age Tracker</h1>
-                    <p class="text-slate-400 text-xs sm:text-sm font-mono tracking-wide">TRACK THE CURRENT AGES OF YOUR FAVOURITE BTAS CHARACTERS!</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-200 tracking-tight font-mono">Longevity Database</h1>
+                    <p class="text-slate-400 text-xs sm:text-sm font-mono tracking-wide">LIVE LONGEVITY TRACKER (ALIVE / DECEASED / LIMBO)</p>
                 </div>
             </div>
-            <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2 text-xs font-mono w-full sm:w-auto justify-center sm:justify-start shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-cyan-600 animate-pulse"></span>
-                <span class="text-slate-400">Entries:</span>
-                <span id="live-count-badge" class="text-slate-300 font-bold">0</span>
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <button type="button" id="load-samples-btn" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-400 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer">
+                    + Add Sheet Entries
+                </button>
+                <button type="button" id="purge-all-btn" class="bg-red-950/40 hover:bg-red-900/40 border border-red-900/30 text-red-400 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer">
+                    Purge All
+                </button>
+                <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-3 text-xs font-mono shadow-sm">
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+                        <span class="text-slate-400">Total: Entries</span>
+                        <span id="live-count-badge" class="text-slate-200 font-bold">0</span>
+                    </div>
+                    <span class="text-slate-700">|</span>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-emerald-400">Alive:</span>
+                        <span id="alive-count-badge" class="text-slate-200 font-bold">0</span>
+                    </div>
+                    <span class="text-slate-700">|</span>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-amber-400">Limbo:</span>
+                        <span id="limbo-count-badge" class="text-slate-200 font-bold">0</span>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="bg-slate-900/90 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-800 mb-8">
-            <h2 class="text-lg sm:text-xl font-bold text-slate-200 mb-6 tracking-wide font-mono border-b border-slate-800 pb-2 text-slate-300">Add Entry</h2>
+        <!-- Add Entry Form -->
+        <div class="bg-slate-900/90 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-800 mb-6">
+            <h2 class="text-lg font-bold text-slate-200 mb-5 tracking-wide font-mono border-b border-slate-800 pb-2">Add Entry</h2>
             
-            <div class="space-y-6">
-                <div class="flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-row gap-4 items-end">
-                    <div class="w-full lg:flex-1">
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">First Name</label>
-                        <input type="text" id="form-first-name" placeholder="Felix" class="w-full h-11 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-sm focus:outline-none focus:border-cyan-600/80 focus:ring-1 focus:ring-cyan-600/30 font-mono">
+            <div class="space-y-5">
+                <!-- Row 1: Name & Gender -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+                    <div class="lg:col-span-4">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider">First Name / Title <span class="text-red-400">*</span></label>
+                        <input type="text" id="form-first-name" placeholder="Click to Type" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-xs focus:outline-none focus:border-cyan-600 font-mono">
                     </div>
-
-                    <div class="w-full lg:flex-1">
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">Middle Name(s) <span class="text-slate-500 font-normal lowercase">(optional)</span></label>
-                        <input type="text" id="form-middle-name" placeholder="Allen" class="w-full h-11 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-sm focus:outline-none focus:border-cyan-600/80 focus:ring-1 focus:ring-cyan-600/30 font-mono">
+                    <div class="lg:col-span-3">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Middle Name(s) <span class="text-slate-500 font-normal lowercase">(optional)</span></label>
+                        <input type="text" id="form-middle-name" placeholder="Click to Type" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-xs focus:outline-none focus:border-cyan-600 font-mono">
                     </div>
-
-                    <div class="w-full lg:flex-1">
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">Last Name</label>
-                        <input type="text" id="form-last-name" placeholder="Harris" class="w-full h-11 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-sm focus:outline-none focus:border-cyan-600/80 focus:ring-1 focus:ring-cyan-600/30 font-mono">
+                    <div class="lg:col-span-3">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Last Name <span class="text-red-400">*</span></label>
+                        <input type="text" id="form-last-name" placeholder="Click to Type" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-xs focus:outline-none focus:border-cyan-600 font-mono">
                     </div>
-
-                    <div class="w-full lg:w-[15%] shrink-0">
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">Gender</label>
-                        <div class="flex items-center space-x-1 bg-slate-950/60 p-1 rounded h-11 border border-slate-800">
-                            <button type="button" id="gender-f" class="flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">F</button>
-                            <button type="button" id="gender-m" class="flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">M</button>
-                            <button type="button" id="gender-nb" class="flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">N/A</button>
+                    <div class="lg:col-span-2">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Gender <span class="text-red-400">*</span></label>
+                        <div class="flex items-center space-x-1 bg-slate-950/60 p-1 rounded h-10 border border-slate-800">
+                            <button type="button" id="gender-f" class="flex-1 h-full text-[11px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors">F</button>
+                            <button type="button" id="gender-m" class="flex-1 h-full text-[11px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors">M</button>
                         </div>
                     </div>
                 </div>
-
-                <div class="flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-6 pt-2">
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 flex-1 w-full">
-                        
-                        <div class="space-y-1.5 w-full lg:w-[39.56%]">
-                            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">date of birth</label>
-                            <input type="text" id="form-birth-date" placeholder="e.g., &quot;July 6, 2026&quot;, &quot;6th of July, 2026&quot;" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-xs focus:outline-none focus:border-cyan-600 font-mono">
-                            <p id="date-preview" class="text-[11px] text-red-400 font-mono italic h-4 min-h-4"></p>
-                        </div>
-
-                        <div class="space-y-1.5 w-full lg:w-[22.5%] text-center">
-                            <h3 class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono w-full text-center">Birth Time <span class="text-slate-500 font-normal lowercase">(optional)</span></h3>
-                            <div class="flex items-center justify-center space-x-2 bg-slate-950/60 px-3 py-1 rounded border border-slate-800 h-10 w-full mx-auto">
-                                <div class="flex items-center space-x-1 justify-center">
-                                    <input type="text" id="input-hour" value="--" maxlength="2" class="w-8 bg-slate-900 border border-slate-800 rounded text-center text-xs font-mono font-bold text-slate-300 focus:outline-none focus:border-cyan-600 p-0.5">
-                                    <span class="text-slate-700 font-bold select-none pb-0.5 text-xs font-mono">:</span>
-                                    <input type="text" id="input-minute" value="--" maxlength="2" class="w-8 bg-slate-900 border border-slate-800 rounded text-center text-xs font-mono font-bold text-slate-300 focus:outline-none focus:border-cyan-600 p-0.5">
-                                </div>
-                                
-                                <div class="flex items-center space-x-1 pl-2 border-l border-slate-800 h-full py-1 justify-center">
-                                    <button type="button" id="ampm-am" class="px-2 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">AM</button>
-                                    <button type="button" id="ampm-pm" class="px-2 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">PM</button>
-                                </div>
-                            </div>
-                        </div>
+                <!-- Row 2: Birth, Death, Status/Limbo, Submit -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-start pt-1">
+                    <!-- Birth Date -->
+                    <div class="lg:col-span-3 space-y-1">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Birth Date <span class="text-red-400">*</span></label>
+                        <input type="text" id="form-birth-date" placeholder="Click to Type" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-xs focus:outline-none focus:border-cyan-600 font-mono">
+                        <p id="birth-preview" class="text-[11px] text-red-400 font-mono italic h-4"></p>
                     </div>
-
-                    <div class="pb-0.5 w-full lg:w-auto">
-                        <button type="button" id="submit-btn" disabled class="w-full lg:w-48 bg-slate-800 text-slate-600 font-semibold py-2px px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-sm h-10 font-mono tracking-wider">Confirm</button>
+                    <!-- Death Date / Unverified -->
+                    <div class="lg:col-span-3 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Death Date</label>
+                            <button type="button" id="set-unverified-btn" class="text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer">Mark Unverified (Limbo)</button>
+                        </div>
+                        <input type="text" id="form-death-date" placeholder="Click to Type" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-xs focus:outline-none focus:border-cyan-600 font-mono">
+                        <p id="death-preview" class="text-[11px] text-slate-500 font-mono italic h-4">Alive</p>
+                    </div>
+                    <!-- Last Verified (If Limbo) -->
+                    <div class="lg:col-span-3 space-y-1">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">If "Limbo", Last Verified</label>
+                        <input type="text" id="form-last-verified" placeholder="Click to Type" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-xs focus:outline-none focus:border-cyan-600 font-mono">
+                        <p class="text-[10px] text-slate-500 font-mono h-4">For Limbo</p>
+                    </div>
+                    <!-- Submit Button -->
+                    <div class="lg:col-span-3 pt-5">
+                        <button type="button" id="submit-btn" disabled class="w-full bg-slate-800 text-slate-600 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-xs h-10 font-mono tracking-wider uppercase">Add to Database</button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div id="table-wrapper" class="bg-slate-900 rounded-lg shadow-xl border border-slate-800 hidden overflow-visible">
-            <div class="min-w-full align-middle overflow-visible">
-                <table class="min-w-full divide-y divide-slate-800 text-left text-sm table-fixed overflow-visible font-mono">
-                    <thead class="bg-slate-950/60 text-slate-400 uppercase text-[10px] sm:text-xs font-semibold tracking-wider font-mono">
-                        <tr>
-                            <th class="w-1/4 px-4 sm:px-6 py-4 font-mono">Name</th>
-                            <th class="w-[12%] px-4 sm:px-6 py-4 text-center font-mono">Gender</th>
-                            <th class="w-1/4 px-4 sm:px-6 py-4 font-mono">Date of Birth</th>
-                            <th class="w-1/4 px-4 sm:px-6 py-4 font-mono">Age</th>
-                            <th class="w-[15%] px-4 sm:px-6 py-4 text-center font-mono">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body" class="divide-y divide-slate-800 bg-slate-950/20 overflow-visible font-mono"></tbody>
-                </table>
+        <!-- Controls: Find in List & Sort Data -->
+        <div class="bg-slate-900/90 p-3 sm:p-4 rounded-lg border border-slate-800 mb-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+            <!-- Find in List -->
+            <div class="relative flex-1 max-w-md">
+                <input type="text" id="search-input" placeholder="Find in List (search name, year, status)..." class="w-full h-9 bg-slate-950/80 border border-slate-800 rounded pl-3 pr-8 text-xs text-slate-200 focus:outline-none focus:border-cyan-600 font-mono">
+                <button type="button" id="clear-search-btn" class="hidden absolute right-2.5 top-2 text-slate-500 hover:text-slate-300 text-xs">✕</button>
             </div>
+            <!-- Status Filter & Sort Data -->
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center bg-slate-950/80 border border-slate-800 rounded p-0.5 text-[11px]">
+                    <button type="button" data-filter="ALL" class="filter-btn px-2.5 py-1 rounded bg-cyan-900/60 text-cyan-200 font-bold">All</button>
+                    <button type="button" data-filter="Alive" class="filter-btn px-2.5 py-1 rounded text-slate-400 hover:text-slate-200">Alive</button>
+                    <button type="button" data-filter="Deceased" class="filter-btn px-2.5 py-1 rounded text-slate-400 hover:text-slate-200">Deceased</button>
+                    <button type="button" data-filter="Limbo" class="filter-btn px-2.5 py-1 rounded text-slate-400 hover:text-slate-200">Limbo</button>
+                </div>
+                <select id="sort-select" class="h-9 bg-slate-950/80 border border-slate-800 rounded px-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-600 font-mono cursor-pointer">
+                    <option value="birth-asc">Oldest -> Youngest</option>
+                    <option value="birth-desc">Youngest -> Oldest</option>
+                    <option value="name-asc">Alphabetically</option>
+                </select>
+            </div>
+        </div>
+        <!-- Data Table -->
+        <div id="table-wrapper" class="bg-slate-900 rounded-lg shadow-xl border border-slate-800 hidden overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-800 text-left text-xs sm:text-sm font-mono">
+                <thead class="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs font-semibold tracking-wider">
+                    <tr>
+                        <th class="w-[24%] px-4 py-3.5 text-center border-r border-slate-800/80">Name</th>
+                        <th class="w-[8%] px-2 py-3.5 text-center border-r border-slate-800/80">Gender</th>
+                        <th class="w-[15%] px-4 py-3.5 text-center border-r border-slate-800/80">Birth</th>
+                        <th class="w-[15%] px-4 py-3.5 text-center border-r border-slate-800/80">Death</th>
+                        <th class="w-[15%] px-4 py-3.5 text-center border-r border-slate-800/80">Age</th>
+                        <th class="w-[10%] px-3 py-3.5 text-center border-r border-slate-800/80">Status</th>
+                        <th class="w-[13%] px-4 py-3.5 text-center border-r border-slate-800/80">If "Limbo", Last Verified</th>
+                        <th class="w-[8%] px-3 py-3.5 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body" class="divide-y divide-slate-800 bg-slate-950/20"></tbody>
+            </table>
         </div>
     </div>
-
     <script>
-        let ageMatrixDataMap = JSON.parse(localStorage.getItem('age_matrix_gender_data')) || {};
-        let activeAmPm = ""; 
-        let activeGender = ""; 
+        const STORAGE_KEY = 'longevity_database_v12';
+        let peopleDataMap = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        let activeGender = "";
         let openDropdownKey = null;
-        let activelyEditingKey = null; 
-
-        const MIN_BIRTH_DATE = new Date(1900, 0, 1);
-
-        const submitBtnEnabledClass = "w-full lg:w-48 bg-cyan-800 hover:bg-cyan-700 text-slate-200 font-semibold py-2 px-4 rounded transition-colors duration-75 ease-out shadow-sm cursor-pointer text-sm h-10 font-mono tracking-wider";
-        const submitBtnDisabledClass = "w-full lg:w-48 bg-slate-800 text-slate-600 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-sm h-10 font-mono tracking-wider";
-
-        const btnActiveStyle = "flex-1 h-full text-[10px] font-bold rounded bg-cyan-800 text-slate-200 transition-colors duration-75 ease-out shadow-sm font-mono";
-        const btnInactiveStyle = "flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono";
-
-        const ampmActiveStyle = "px-2 h-full text-[10px] font-bold rounded bg-cyan-800 text-slate-200 transition-colors duration-75 ease-out shadow-sm font-mono";
-        const ampmInactiveStyle = "px-2 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono";
-
-        const genderStyles = {
-            'F': { text: 'text-slate-300', border: 'border-slate-800', bg: 'bg-slate-950/60', hover: 'hover:bg-slate-800' },
-            'M': { text: 'text-slate-300', border: 'border-slate-800', bg: 'bg-slate-950/60', hover: 'hover:bg-slate-800' },
-            'N/A': { text: 'text-slate-300', border: 'border-slate-800', bg: 'bg-slate-950/60', hover: 'hover:bg-slate-800' }
+        let activelyEditingKey = null;
+        let currentFilter = "ALL";
+        let currentSort = "birth-asc";
+        let searchQuery = "";
+        const submitBtnEnabledClass = "w-full bg-cyan-800 hover:bg-cyan-700 text-slate-200 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-sm cursor-pointer text-xs h-10 font-mono tracking-wider uppercase";
+        const submitBtnDisabledClass = "w-full bg-slate-800 text-slate-600 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-xs h-10 font-mono tracking-wider uppercase";
+        const btnActiveStyle = "flex-1 h-full text-[11px] font-bold rounded bg-cyan-800 text-slate-200 transition-colors shadow-sm";
+        const btnInactiveStyle = "flex-1 h-full text-[11px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors";
+        const monthMap = {
+            'january': 0, 'jan': 0, 'januery': 0,
+            'february': 1, 'feb': 1, 'febuary': 1, 'febrary': 1,
+            'march': 2, 'mar': 2,
+            'april': 3, 'apr': 3,
+            'may': 4,
+            'june': 5, 'jun': 5,
+            'july': 6, 'jul': 6,
+            'august': 7, 'aug': 7,
+            'september': 8, 'sep': 8, 'sept': 8,
+            'october': 9, 'oct': 9,
+            'november': 10, 'nov': 10,
+            'december': 11, 'dec': 11
         };
-
-        const monthTypos = {
-            'january': 'january', 'jan': 'january', 'januery': 'january',
-            'february': 'february', 'feb': 'february', 'febuary': 'february', 'febrary': 'february',
-            'march': 'march', 'mar': 'march',
-            'april': 'april', 'apr': 'april',
-            'may': 'may',
-            'june': 'june', 'jun': 'june',
-            'july': 'july', 'jul': 'july',
-            'august': 'august', 'aug': 'august',
-            'september': 'september', 'sep': 'september', 'sept': 'september',
-            'october': 'october', 'oct': 'october',
-            'november': 'november', 'nov': 'november',
-            'december': 'december', 'dec': 'december'
-        };
-
-        function saveToLocalStorage() { localStorage.setItem('age_matrix_gender_data', JSON.stringify(ageMatrixDataMap)); }
-
-        function isValidBirthDate(date) { return date >= MIN_BIRTH_DATE && date <= new Date(); }
-
-        function parseCleanedTextDate(rawText) {
-            let str = rawText.trim().toLowerCase();
+        function parseHistoricalDate(rawText) {
+            if (!rawText) return null;
+            let str = rawText.trim();
             if (!str) return null;
-
-            Object.keys(monthTypos).forEach(typo => {
-                const regex = new RegExp(`\\b${typo}\\b`, 'g');
-                if (regex.test(str)) {
-                    str = str.replace(regex, monthTypos[typo]);
-                }
-            });
-
-            str = str.replace(/(\b\d+)(st|nd|rd|th)\b/g, '$1');
-            str = str.replace(/\bof\b/g, ' ');
-
-            const parsedTimestamp = Date.parse(str);
-            if (isNaN(parsedTimestamp)) return null;
-
-            const targetDate = new Date(parsedTimestamp);
-            return isValidBirthDate(targetDate) ? targetDate : null;
-        }
-
-        function getFormDateTimeData() {
-            const rawTextDate = document.getElementById('form-birth-date').value;
-            const validDateObj = parseCleanedTextDate(rawTextDate);
-
-            if (!validDateObj) return null;
-
-            const hRaw = document.getElementById('input-hour').value;
-            const mRaw = document.getElementById('input-minute').value;
-
-            let h = parseInt(hRaw, 10);
-            let m = parseInt(mRaw, 10);
-            let hasTime = true;
-
-            if (isNaN(h) || hRaw === '--' || isNaN(m) || mRaw === '--' || !activeAmPm) {
-                h = 0; 
-                m = 0;
-                hasTime = false;
-            } else {
-                if (activeAmPm === "PM" && h < 12) h += 12;
-                if (activeAmPm === "AM" && h === 12) h = 0;
+            const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{1,4})$/);
+            if (slashMatch) {
+                const m = parseInt(slashMatch[1], 10) - 1;
+                const d = parseInt(slashMatch[2], 10);
+                const y = parseInt(slashMatch[3], 10);
+                if (m < 0 || m > 11 || d < 1 || d > 31) return null;
+                const dt = new Date(0);
+                dt.setFullYear(y, m, d);
+                dt.setHours(0, 0, 0, 0);
+                if (dt.getMonth() !== m) return null;
+                return { date: dt, isMonthOnly: false };
             }
-
-            const year = validDateObj.getFullYear();
-            const month = String(validDateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(validDateObj.getDate()).padStart(2, '0');
-
-            const combinedDateTimeString = `${year}-${month}-${day}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
-            const finalComputedDate = new Date(combinedDateTimeString);
-            
-            if (isNaN(finalComputedDate.getTime()) || finalComputedDate > new Date()) return null;
-            
-            return { chosenDate: finalComputedDate, hasTime, combinedDateTimeString, originalTypedFormat: rawTextDate };
+            const monthYearMatch = str.toLowerCase().replace(/,/g, '').match(/^([a-z]+)\s+(\d{1,4})$/);
+            if (monthYearMatch && monthMap.hasOwnProperty(monthYearMatch[1])) {
+                const m = monthMap[monthYearMatch[1]];
+                const y = parseInt(monthYearMatch[2], 10);
+                const dt = new Date(0);
+                dt.setFullYear(y, m, 1);
+                dt.setHours(0, 0, 0, 0);
+                return { date: dt, isMonthOnly: true };
+            }
+            let cleaned = str.toLowerCase().replace(/(\b\d+)(st|nd|rd|th)\b/g, '$1').replace(/\bof\b/g, ' ').replace(/,/g, ' ').trim();
+            const parts = cleaned.split(/\s+/);
+            if (parts.length === 3) {
+                let m = -1, d = -1, y = -1;
+                if (monthMap.hasOwnProperty(parts[0])) {
+                    m = monthMap[parts[0]];
+                    d = parseInt(parts[1], 10);
+                    y = parseInt(parts[2], 10);
+                } else if (monthMap.hasOwnProperty(parts[1])) {
+                    d = parseInt(parts[0], 10);
+                    m = monthMap[parts[1]];
+                    y = parseInt(parts[2], 10);
+                }
+                if (m >= 0 && !isNaN(d) && !isNaN(y) && d >= 1 && d <= 31) {
+                    const dt = new Date(0);
+                    dt.setFullYear(y, m, d);
+                    dt.setHours(0, 0, 0, 0);
+                    if (dt.getMonth() === m) return { date: dt, isMonthOnly: false };
+                }
+            }
+            return null;
         }
-
-        function isFormValid() {
+        function formatSheetDate(dateObj, isMonthOnly, rawFallback) {
+            if (!dateObj) return rawFallback || "";
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            if (isMonthOnly) {
+                return `${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+            }
+            const m = dateObj.getMonth() + 1;
+            const d = dateObj.getDate();
+            const y = dateObj.getFullYear() < 1000 ? String(dateObj.getFullYear()).padStart(4, '0') : dateObj.getFullYear();
+            return `${m}/${d}/${y}`;
+        }
+        function computeStatus(deathRaw) {
+            if (!deathRaw || deathRaw.trim() === "") return "Alive";
+            if (deathRaw.trim().toLowerCase() === "unverified") return "Limbo";
+            return "Deceased";
+        }
+        function calculateSheetAge(birthIso, deathIso, status) {
+            const birthDate = new Date(birthIso);
+            const endDate = (status === "Deceased" && deathIso) ? new Date(deathIso) : new Date();
+            if (isNaN(birthDate.getTime()) || birthDate > endDate) return { text: "Invalid", numericYears: 0 };
+            let years = endDate.getFullYear() - birthDate.getFullYear();
+            let months = endDate.getMonth() - birthDate.getMonth();
+            let days = endDate.getDate() - birthDate.getDate();
+            if (days < 0) {
+                months--;
+                const prevMonthDays = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
+                days += prevMonthDays;
+            }
+            if (months < 0) { years--; months += 12; }
+            return {
+                text: `${years} ${years === 1 ? 'year' : 'years'}`,
+                numericYears: years + (months / 12) + (days / 365.25)
+            };
+        }
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(peopleDataMap));
+        }
+        function getFormValidation() {
             const firstName = document.getElementById('form-first-name').value.trim();
             const lastName = document.getElementById('form-last-name').value.trim();
-
-            if (!firstName || !lastName || !activeGender) return false;
-
-            const timeData = getFormDateTimeData();
-            if (!timeData) return false;
-
-            return true;
+            const birthRaw = document.getElementById('form-birth-date').value.trim();
+            const deathRaw = document.getElementById('form-death-date').value.trim();
+            if (!firstName || !lastName || !activeGender || !birthRaw) return null;
+            const parsedBirth = parseHistoricalDate(birthRaw);
+            if (!parsedBirth || parsedBirth.date > new Date()) return null;
+            let parsedDeath = null;
+            const status = computeStatus(deathRaw);
+            if (status === "Deceased") {
+                parsedDeath = parseHistoricalDate(deathRaw);
+                if (!parsedDeath || parsedDeath.date < parsedBirth.date || parsedDeath.date > new Date()) return null;
+            }
+            return {
+                birthDateObj: parsedBirth.date,
+                birthIsMonthOnly: parsedBirth.isMonthOnly,
+                deathDateObj: parsedDeath ? parsedDeath.date : null,
+                deathIsMonthOnly: parsedDeath ? parsedDeath.isMonthOnly : false,
+                status
+            };
         }
-
         function updateSubmitButtonState() {
             const btn = document.getElementById('submit-btn');
-            const valid = isFormValid();
+            const valid = !!getFormValidation();
             btn.disabled = !valid;
             btn.className = valid ? submitBtnEnabledClass : submitBtnDisabledClass;
         }
-
-        function autoFixMissingYearComma(element) {
-            let val = element.value;
-            const regex = /([^,]\s)(\b\d{4}\b)/g;
-            if (regex.test(val)) {
-                const selectionStart = element.selectionStart;
-                element.value = val.replace(regex, (match, p1, p2) => p1.trim() + ', ' + p2);
-                element.setSelectionRange(selectionStart + 1, selectionStart + 1);
-            }
-        }
-
-        function checkDateOnBlur() {
-            const previewEl = document.getElementById('date-preview');
-            autoFixMissingYearComma(document.getElementById('form-birth-date'));
-            const rawTextDate = document.getElementById('form-birth-date').value;
-            
-            if (!rawTextDate.trim()) {
-                previewEl.innerText = "";
-                return;
-            }
-
-            const parsed = parseCleanedTextDate(rawTextDate);
-            if (!parsed) {
-                previewEl.innerText = "Invalid date";
-                previewEl.className = "text-[11px] text-red-400 font-semibold font-mono h-4 min-h-4";
-            } else {
-                previewEl.innerText = "";
-            }
-        }
-
-        function bindTimeValidations(inputId, limit) {
-            const element = document.getElementById(inputId);
-            
-            element.addEventListener('focus', function() {
-                if (this.value === '--') this.value = '';
-            });
-
-            element.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-                updateSubmitButtonState();
-            });
-
-            element.addEventListener('blur', function() {
-                let currentNum = parseInt(this.value, 10);
-                if (this.value.trim() === '' || isNaN(currentNum) || currentNum > limit || currentNum < (inputId === 'input-hour' ? 1 : 0)) {
-                    this.value = "--";
-                } else {
-                    this.value = String(currentNum).padStart(2, '0');
-                }
-                updateSubmitButtonState();
-            });
-        }
-
-        bindTimeValidations('input-hour', 12);
-        bindTimeValidations('input-minute', 59);
-
-        function setDefaultTimeToDash() {
-            document.getElementById('input-hour').value = '--';
-            document.getElementById('input-minute').value = '--';
-            activeAmPm = "";
-            document.getElementById('ampm-am').className = ampmInactiveStyle;
-            document.getElementById('ampm-pm').className = ampmInactiveStyle;
-        }
-
-        function resetGenderToggle() {
-            activeGender = "";
-            document.getElementById('gender-f').className = btnInactiveStyle;
-            document.getElementById('gender-m').className = btnInactiveStyle;
-            document.getElementById('gender-nb').className = btnInactiveStyle;
-        }
-
-        function resetFormDefaults() {
-            document.getElementById('form-first-name').value = '';
-            document.getElementById('form-middle-name').value = '';
-            document.getElementById('form-last-name').value = '';
-            document.getElementById('form-birth-date').value = '';
-            document.getElementById('date-preview').innerText = '';
-            resetGenderToggle();
-            setDefaultTimeToDash();
-            updateSubmitButtonState();
-        }
-
         document.getElementById('form-birth-date').addEventListener('input', function() {
-            if (this.value.length > 0) {
-                this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
-            }
-            autoFixMissingYearComma(this);
-            document.getElementById('date-preview').innerText = "";
-            updateSubmitButtonState();
-        });
-
-        document.getElementById('form-birth-date').addEventListener('blur', checkDateOnBlur);
-
-        document.getElementById('gender-f').addEventListener('click', function() {
-            if (activeGender === "F") {
-                activeGender = "";
-                this.className = btnInactiveStyle;
+            const preview = document.getElementById('birth-preview');
+            if (!this.value.trim()) {
+                preview.innerText = "";
             } else {
-                activeGender = "F";
-                this.className = btnActiveStyle;
-                document.getElementById('gender-m').className = btnInactiveStyle;
-                document.getElementById('gender-nb').className = btnInactiveStyle;
-            }
-            updateSubmitButtonState();
-        });
-
-        document.getElementById('gender-m').addEventListener('click', function() {
-            if (activeGender === "M") {
-                activeGender = "";
-                this.className = btnInactiveStyle;
-            } else {
-                activeGender = "M";
-                this.className = btnActiveStyle;
-                document.getElementById('gender-f').className = btnInactiveStyle;
-                document.getElementById('gender-nb').className = btnInactiveStyle;
-            }
-            updateSubmitButtonState();
-        });
-
-        document.getElementById('gender-nb').addEventListener('click', function() {
-            if (activeGender === "N/A") {
-                activeGender = "";
-                this.className = btnInactiveStyle;
-            } else {
-                activeGender = "N/A";
-                this.className = btnActiveStyle;
-                document.getElementById('gender-f').className = btnInactiveStyle;
-                document.getElementById('gender-m').className = btnInactiveStyle;
-            }
-            updateSubmitButtonState();
-        });
-
-        ['form-first-name', 'form-middle-name', 'form-last-name'].forEach(function(id) {
-            document.getElementById(id).addEventListener('input', function() {
-                if (this.value.length > 0) {
-                    this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
+                const p = parseHistoricalDate(this.value);
+                if (!p) {
+                    preview.innerText = "Invalid date format";
+                    preview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                } else {
+                    preview.innerText = "Parsed: " + formatSheetDate(p.date, p.isMonthOnly);
+                    preview.className = "text-[11px] text-cyan-400 font-mono italic h-4";
                 }
+            }
+            updateSubmitButtonState();
+        });
+        document.getElementById('form-death-date').addEventListener('input', function() {
+            const preview = document.getElementById('death-preview');
+            const val = this.value.trim();
+            if (!val) {
+                preview.innerText = "Alive";
+                preview.className = "text-[11px] text-emerald-400 font-mono italic h-4";
+            } else if (val.toLowerCase() === "unverified") {
+                preview.innerText = "Limbo (fill Last Verified)";
+                preview.className = "text-[11px] text-amber-400 font-mono italic h-4";
+            } else {
+                const p = parseHistoricalDate(val);
+                if (!p) {
+                    preview.innerText = "Invalid death date";
+                    preview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                } else {
+                    preview.innerText = "Deceased (" + formatSheetDate(p.date, p.isMonthOnly) + ")";
+                    preview.className = "text-[11px] text-slate-400 font-mono italic h-4";
+                }
+            }
+            updateSubmitButtonState();
+        });
+        document.getElementById('set-unverified-btn').addEventListener('click', function() {
+            const deathInput = document.getElementById('form-death-date');
+            deathInput.value = "Unverified";
+            deathInput.dispatchEvent(new Event('input'));
+            document.getElementById('form-last-verified').focus();
+        });
+        ['f', 'm'].forEach(code => {
+            const val = code.toUpperCase();
+            document.getElementById(`gender-${code}`).addEventListener('click', function() {
+                activeGender = (activeGender === val) ? "" : val;
+                ['f', 'm'].forEach(c => {
+                    const v = c.toUpperCase();
+                    document.getElementById(`gender-${c}`).className = (activeGender === v) ? btnActiveStyle : btnInactiveStyle;
+                });
                 updateSubmitButtonState();
             });
         });
-
-        document.getElementById('ampm-am').addEventListener('click', function() {
-            if (activeAmPm === "AM") {
-                activeAmPm = "";
-                this.className = ampmInactiveStyle;
-            } else {
-                activeAmPm = "AM";
-                this.className = ampmActiveStyle;
-                document.getElementById('ampm-pm').className = ampmInactiveStyle;
-            }
-            updateSubmitButtonState();
+        ['form-first-name', 'form-middle-name', 'form-last-name', 'form-last-verified'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateSubmitButtonState);
         });
-
-        document.getElementById('ampm-pm').addEventListener('click', function() {
-            if (activeAmPm === "PM") {
-                activeAmPm = "";
-                this.className = ampmInactiveStyle;
-            } else {
-                activeAmPm = "PM";
-                this.className = ampmActiveStyle;
-                document.getElementById('ampm-am').className = ampmInactiveStyle;
-            }
+        function resetFormDefaults() {
+            ['form-first-name', 'form-middle-name', 'form-last-name', 'form-birth-date', 'form-death-date', 'form-last-verified'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('birth-preview').innerText = '';
+            document.getElementById('death-preview').innerText = 'Alive';
+            document.getElementById('death-preview').className = 'text-[11px] text-slate-500 font-mono italic h-4';
+            activeGender = "";
+            ['f', 'm'].forEach(c => document.getElementById(`gender-${c}`).className = btnInactiveStyle);
             updateSubmitButtonState();
+        }
+        document.getElementById('submit-btn').addEventListener('click', function() {
+            const validData = getFormValidation();
+            if (!validData) return;
+            const localKey = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            peopleDataMap[localKey] = {
+                firstName: document.getElementById('form-first-name').value.trim(),
+                middleName: document.getElementById('form-middle-name').value.trim(),
+                lastName: document.getElementById('form-last-name').value.trim(),
+                gender: activeGender,
+                birthIso: validData.birthDateObj.toISOString(),
+                birthDisplay: formatSheetDate(validData.birthDateObj, validData.birthIsMonthOnly),
+                deathIso: validData.deathDateObj ? validData.deathDateObj.toISOString() : null,
+                deathDisplay: validData.status === "Limbo" ? "Unverified" : (validData.deathDateObj ? formatSheetDate(validData.deathDateObj, validData.deathIsMonthOnly) : ""),
+                status: validData.status,
+                lastVerified: validData.status === "Limbo" ? (document.getElementById('form-last-verified').value.trim() || "Unverified") : ""
+            };
+            saveToLocalStorage();
+            renderTable();
+            resetFormDefaults();
         });
-
-        function updateMetricBadge() {
-            const totalRows = Object.keys(ageMatrixDataMap).length;
-            document.getElementById('live-count-badge').innerText = totalRows;
-        }
-
-        function calculatePrecisionAge(birthDateString, hasTime) {
-            const birthDate = new Date(birthDateString);
-            const now = new Date();
-            
-            if (birthDate > now) return "Not born yet";
-
-            let years = now.getFullYear() - birthDate.getFullYear();
-            let months = now.getMonth() - birthDate.getMonth();
-            let days = now.getDate() - birthDate.getDate();
-            let hours = now.getHours() - birthDate.getHours();
-            let minutes = now.getMinutes() - birthDate.getMinutes();
-
-            if (minutes < 0) { hours--; minutes += 60; }
-            if (hours < 0) { days--; hours += 24; }
-            if (days < 0) { months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
-            if (months < 0) { years--; months += 12; }
-
-            let weeks = Math.floor(days / 7);
-            let leftoverDays = days % 7;
-
-            const segments = [];
-            if (years > 0) segments.push(`${years} y`);
-            if (months > 0) segments.push(`${months} m`);
-            if (weeks > 0) segments.push(`${weeks} w`);
-            if (leftoverDays > 0) segments.push(`${leftoverDays} d`);
-            
-            if (hasTime) {
-                if (hours > 0) segments.push(`${hours} h`);
-                if (minutes > 0) segments.push(`${minutes} ${minutes === 1 ? 'min' : 'mins'}`);
-            }
-
-            return segments.length === 0 ? "Just born" : segments.join(', ');
-        }
-
-        function toggleDropdownMenu(key, event) {
-            event.stopPropagation();
-            const matchingMenu = document.getElementById(`dropdown-${key}`);
-            const triggerBtn = event.currentTarget;
-            if (!matchingMenu) return;
-
-            if (openDropdownKey === key) {
-                matchingMenu.classList.remove('open');
-                triggerBtn.classList.remove('rounded-t');
-                triggerBtn.classList.add('rounded');
-                openDropdownKey = null;
-            } else {
-                if (openDropdownKey) {
-                    const activeMenu = document.getElementById(`dropdown-${openDropdownKey}`);
-                    const activeRow = activeMenu?.closest('tr');
-                    const activeTrigger = activeRow?.querySelector('.gender-trigger');
-                    if (activeMenu) activeMenu.classList.remove('open');
-                    if (activeTrigger) {
-                        activeTrigger.classList.remove('rounded-t');
-                        activeTrigger.classList.add('rounded');
-                    }
-                }
-                matchingMenu.classList.add('open');
-                triggerBtn.classList.remove('rounded');
-                triggerBtn.classList.add('rounded-t');
-                openDropdownKey = key;
-            }
-        }
-
-        function selectGenderOption(key, chosenValue) {
-            if (ageMatrixDataMap[key]) {
-                ageMatrixDataMap[key].gender = chosenValue;
+        document.getElementById('purge-all-btn').addEventListener('click', function() {
+            if (confirm("Are you sure you want to purge all entries from the database?")) {
+                peopleDataMap = {};
                 saveToLocalStorage();
-                openDropdownKey = null; 
                 renderTable();
             }
-        }
-
-        function handleCellFocus(key) {
-            activelyEditingKey = key; 
-        }
-
-        function handleNameSave(key, element) {
-            const rawText = element.innerText.trim();
-            if (!rawText) {
+        });
+        document.getElementById('search-input').addEventListener('input', function() {
+            searchQuery = this.value.trim().toLowerCase();
+            document.getElementById('clear-search-btn').classList.toggle('hidden', !searchQuery);
+            renderTable();
+        });
+        document.getElementById('clear-search-btn').addEventListener('click', function() {
+            document.getElementById('search-input').value = "";
+            searchQuery = "";
+            this.classList.add('hidden');
+            renderTable();
+        });
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentFilter = this.getAttribute('data-filter');
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.className = (b === this)
+                        ? "filter-btn px-2.5 py-1 rounded bg-cyan-900/60 text-cyan-200 font-bold"
+                        : "filter-btn px-2.5 py-1 rounded text-slate-400 hover:text-slate-200";
+                });
                 renderTable();
-                activelyEditingKey = null;
-                return;
+            });
+        });
+        document.getElementById('sort-select').addEventListener('change', function() {
+            currentSort = this.value;
+            renderTable();
+        });
+        function handleCellFocus(key) { activelyEditingKey = key; }
+        function handleNameSave(key, el) {
+            const raw = el.innerText.trim();
+            if (raw && peopleDataMap[key]) {
+                const parts = raw.split(/\s+/);
+                peopleDataMap[key].firstName = parts[0];
+                peopleDataMap[key].middleName = parts.length > 2 ? parts.slice(1, -1).join(" ") : "";
+                peopleDataMap[key].lastName = parts.length > 1 ? parts[parts.length - 1] : "";
+                saveToLocalStorage();
             }
-
-            const segments = rawText.split(/\s+/);
-            if (segments.length === 1) {
-                ageMatrixDataMap[key].firstName = segments[0];
-                ageMatrixDataMap[key].middleName = "";
-                ageMatrixDataMap[key].lastName = "";
-            } else if (segments.length === 2) {
-                ageMatrixDataMap[key].firstName = segments[0];
-                ageMatrixDataMap[key].middleName = "";
-                ageMatrixDataMap[key].lastName = segments[1];
-            } else {
-                ageMatrixDataMap[key].firstName = segments[0];
-                ageMatrixDataMap[key].lastName = segments[segments.length - 1];
-                ageMatrixDataMap[key].middleName = segments.slice(1, segments.length - 1).join(" ");
-            }
-
-            saveToLocalStorage();
-            activelyEditingKey = null;
-            renderTable(); 
-        }
-
-        function handleDobSave(key, element) {
-            const fullRawText = element.innerText.trim();
-            if (!fullRawText) {
-                renderTable();
-                activelyEditingKey = null;
-                return;
-            }
-
-            let textDatePart = fullRawText;
-            let timePart = "";
-            if (fullRawText.includes("|")) {
-                const pieces = fullRawText.split("|");
-                textDatePart = pieces[0].trim();
-                timePart = pieces[1].trim();
-            } else if (fullRawText.includes("(Time")) {
-                const pieces = fullRawText.split("(Time");
-                textDatePart = pieces[0].trim();
-            }
-
-            const parsedDateObj = parseCleanedTextDate(textDatePart);
-            if (!parsedDateObj) {
-                alert("Invalid date entry. Change cancelled.");
-                activelyEditingKey = null;
-                renderTable();
-                return;
-            }
-
-            let hour = 0;
-            let minute = 0;
-            let hasTime = ageMatrixDataMap[key].hasTime;
-
-            if (timePart) {
-                const timeRegex = /(\d+):(\d+)\s*(AM|PM)/i;
-                const match = timePart.match(timeRegex);
-                if (match) {
-                    hour = parseInt(match[1], 10);
-                    minute = parseInt(match[2], 10);
-                    const marker = match[3].toUpperCase();
-                    if (marker === "PM" && hour < 12) hour += 12;
-                    if (marker === "AM" && hour === 12) hour = 0;
-                    hasTime = true;
-                }
-            }
-
-            const year = parsedDateObj.getFullYear();
-            const month = String(parsedDateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(parsedDateObj.getDate()).padStart(2, '0');
-
-            const combinedDateTimeString = `${year}-${month}-${day}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
-            
-            ageMatrixDataMap[key].birthDate = combinedDateTimeString;
-            ageMatrixDataMap[key].originalTypedFormat = textDatePart;
-            ageMatrixDataMap[key].hasTime = hasTime;
-
-            saveToLocalStorage();
             activelyEditingKey = null;
             renderTable();
         }
-
-        document.addEventListener('click', function() {
-            if (openDropdownKey) {
-                const activeMenu = document.getElementById(`dropdown-${openDropdownKey}`);
-                const activeRow = activeMenu?.closest('tr');
-                const activeTrigger = activeRow?.querySelector('.gender-trigger');
-                if (activeMenu) activeMenu.classList.remove('open');
-                if (activeTrigger) {
-                    activeTrigger.classList.remove('rounded-t');
-                    activeTrigger.classList.add('rounded');
-                }
-                openDropdownKey = null;
+        function handleBirthSave(key, el) {
+            const raw = el.innerText.trim();
+            const parsed = parseHistoricalDate(raw);
+            if (parsed && peopleDataMap[key]) {
+                peopleDataMap[key].birthIso = parsed.date.toISOString();
+                peopleDataMap[key].birthDisplay = formatSheetDate(parsed.date, parsed.isMonthOnly);
+                saveToLocalStorage();
+            } else if (raw) {
+                alert("Invalid birth date format.");
             }
-        });
-
-        function renderTable() {
-            const tableWrapper = document.getElementById('table-wrapper');
-            const totalRows = Object.keys(ageMatrixDataMap).length;
-
-            if (totalRows === 0) {
-                tableWrapper.classList.add('hidden');
-                return;
-            }
-
-            tableWrapper.classList.remove('hidden');
-            const tableBody = document.getElementById('table-body');
-            
-            const sortedItems = Object.keys(ageMatrixDataMap)
-                .map(k => ({ localKey: k, ...ageMatrixDataMap[k] }))
-                .sort((a, b) => new Date(a.birthDate) - new Date(b.birthDate));
-                
-            sortedItems.forEach((item) => {
-                if (activelyEditingKey === item.localKey) {
-                    return; 
-                }
-
-                let middleDisplay = '';
-                if (item.middleName && item.middleName.trim() !== '') {
-                    middleDisplay = ' ' + item.middleName.trim();
-                }
-                
-                const fullName = `${item.firstName}${middleDisplay} ${item.lastName}`;
-                
-                let formattedBirthDate = '';
-                const bDateObj = new Date(item.birthDate);
-                const rawDisplayText = item.originalTypedFormat.trim();
-                 
-                if (item.hasTime) {
-                    let rawHours = bDateObj.getHours();
-                    const rawMinutes = String(bDateObj.getMinutes()).padStart(2, '0');
-                    const ampmMarker = rawHours >= 12 ? 'PM' : 'AM';
-                    rawHours = rawHours % 12;
-                    rawHours = rawHours ? rawHours : 12; 
-                    const formattedHours = String(rawHours).padStart(2, '0');
-                    
-                    formattedBirthDate = `${rawDisplayText} | ${formattedHours}:${rawMinutes} ${ampmMarker}`;
+            activelyEditingKey = null;
+            renderTable();
+        }
+        function handleDeathSave(key, el) {
+            const raw = el.innerText.trim();
+            if (peopleDataMap[key]) {
+                const status = computeStatus(raw);
+                if (status === "Alive") {
+                    peopleDataMap[key].deathIso = null;
+                    peopleDataMap[key].deathDisplay = "";
+                    peopleDataMap[key].status = "Alive";
+                    peopleDataMap[key].lastVerified = "";
+                } else if (status === "Limbo") {
+                    peopleDataMap[key].deathIso = null;
+                    peopleDataMap[key].deathDisplay = "Unverified";
+                    peopleDataMap[key].status = "Limbo";
+                    if (!peopleDataMap[key].lastVerified) peopleDataMap[key].lastVerified = "January 2026";
                 } else {
-                    formattedBirthDate = `${rawDisplayText} (Time not tracked)`;
-                }
-
-                const ageText = calculatePrecisionAge(item.birthDate, item.hasTime !== false);
-                const currentStyle = genderStyles[item.gender] || genderStyles['N/A'];
-                
-                let existingRow = document.getElementById(`row-${item.localKey}`);
-                
-                if (!existingRow) {
-                    tableBody.insertAdjacentHTML('beforeend', `
-                        <tr id="row-${item.localKey}" class="hover:bg-slate-900/60 transition-colors duration-75 text-xs sm:text-sm border-b border-slate-800 overflow-visible font-mono">
-                            <td contenteditable="true" 
-                                onfocus="handleCellFocus('${item.localKey}')" 
-                                onblur="handleNameSave('${item.localKey}', this)" 
-                                onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }"
-                                class="name-cell editable-cell px-4 sm:px-6 py-4 font-medium text-slate-200 whitespace-normal break-words cursor-edit select-text focus:bg-slate-950 font-mono">${fullName}</td>
-                            <td class="gender-cell px-4 sm:px-6 py-4 text-center select-none overflow-visible relative">
-                                <div class="relative inline-block text-left w-14 mx-auto">
-                                    <button onclick="toggleDropdownMenu('${item.localKey}', event)" class="gender-trigger flex items-center justify-between w-full px-1.5 py-0.5 text-[10px] font-bold border rounded transition-all shadow-sm ${currentStyle.text} ${currentStyle.border} ${currentStyle.bg} ${currentStyle.hover} font-mono">
-                                        <span class="gender-label mx-auto pl-1 font-mono">${item.gender}</span>
-                                        <svg class="w-2 h-2 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
-                                    </button>
-                                    <div id="dropdown-${item.localKey}" class="dropdown-menu absolute left-0 top-full w-full bg-slate-950 border border-slate-800 border-t-0 rounded-b shadow-xl z-50 overflow-hidden py-0.5">
-                                        <button onclick="selectGenderOption('${item.localKey}', 'F')" class="block w-full text-center px-1 py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-colors font-mono">F</button>
-                                        <button onclick="selectGenderOption('${item.localKey}', 'M')" class="block w-full text-center px-1 py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-colors font-mono">M</button>
-                                        <button onclick="selectGenderOption('${item.localKey}', 'N/A')" class="block w-full text-center px-1 py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-colors font-mono">N/A</button>
-                                    </div>
-                                </div>
-                            </td>
-                            <td contenteditable="true" 
-                                onfocus="handleCellFocus('${item.localKey}')" 
-                                onblur="handleDobSave('${item.localKey}', this)" 
-                                onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }"
-                                class="dob-cell editable-cell px-4 sm:px-6 py-4 text-slate-400 whitespace-normal break-words cursor-edit select-text focus:bg-slate-950 font-mono">${formattedBirthDate}</td>
-                            <td class="age-cell px-4 sm:px-6 py-4 text-amber-500/80 font-mono select-none whitespace-normal break-words shadow-[inset_0_0_8px_rgba(245,158,11,0.02)]">${ageText}</td>
-                            <td class="px-4 sm:px-6 py-4 text-center select-none whitespace-normal">
-                                <button type="button" data-key="${item.localKey}" class="delete-btn text-red-400 hover:text-red-300 font-bold bg-red-950/40 hover:bg-red-900/40 border border-red-900/30 px-2.5 py-1 rounded text-xs font-mono tracking-wide">Purge</button>
-                            </td>
-                        </tr>
-                    `);
-                } else {
-                    existingRow.querySelector('.name-cell').innerText = fullName;
-                    existingRow.querySelector('.dob-cell').innerText = formattedBirthDate;
-                    existingRow.querySelector('.age-cell').innerText = ageText;
-                    
-                    const triggerBtn = existingRow.querySelector('.gender-trigger');
-                    existingRow.querySelector('.gender-label').innerText = item.gender;
-                    
-                    if (openDropdownKey === item.localKey) {
-                        triggerBtn.className = `gender-trigger flex items-center justify-between w-full px-1.5 py-0.5 text-[10px] font-bold border border-b-0 rounded-t transition-all shadow-sm ${currentStyle.text} ${currentStyle.border} ${currentStyle.bg} ${currentStyle.hover} font-mono`;
-                        document.getElementById(`dropdown-${item.localKey}`).classList.add('open');
+                    const parsed = parseHistoricalDate(raw);
+                    if (parsed) {
+                        peopleDataMap[key].deathIso = parsed.date.toISOString();
+                        peopleDataMap[key].deathDisplay = formatSheetDate(parsed.date, parsed.isMonthOnly);
+                        peopleDataMap[key].status = "Deceased";
+                        peopleDataMap[key].lastVerified = "";
                     } else {
-                        triggerBtn.className = `gender-trigger flex items-center justify-between w-full px-1.5 py-0.5 text-[10px] font-bold border rounded transition-all shadow-sm ${currentStyle.text} ${currentStyle.border} ${currentStyle.bg} ${currentStyle.hover} font-mono`;
-                        document.getElementById(`dropdown-${item.localKey}`).classList.remove('open');
+                        alert("Invalid death date. Enter a valid date, 'Unverified', or leave blank for Alive.");
                     }
                 }
-            });
-
-            Array.from(tableBody.children).forEach(row => {
-                const rowId = row.id.replace('row-', '');
-                if (!ageMatrixDataMap[rowId]) row.remove();
-            });
+                saveToLocalStorage();
+            }
+            activelyEditingKey = null;
+            renderTable();
         }
-
+        function handleVerifiedSave(key, el) {
+            const raw = el.innerText.trim();
+            if (peopleDataMap[key]) {
+                peopleDataMap[key].lastVerified = raw;
+                saveToLocalStorage();
+            }
+            activelyEditingKey = null;
+            renderTable();
+        }
+        function toggleDropdownMenu(key, event) {
+            event.stopPropagation();
+            const menu = document.getElementById(`dropdown-${key}`);
+            if (!menu) return;
+            if (openDropdownKey === key) {
+                menu.classList.remove('open');
+                openDropdownKey = null;
+            } else {
+                if (openDropdownKey) {
+                    const prev = document.getElementById(`dropdown-${openDropdownKey}`);
+                    if (prev) prev.classList.remove('open');
+                }
+                menu.classList.add('open');
+                openDropdownKey = key;
+            }
+        }
+        function selectGenderOption(key, val) {
+            if (peopleDataMap[key]) {
+                peopleDataMap[key].gender = val;
+                saveToLocalStorage();
+                openDropdownKey = null;
+                renderTable();
+            }
+        }
         document.addEventListener('click', function(e) {
-            if(e.target && e.target.classList.contains('delete-btn')) {
-                const localKey = e.target.getAttribute('data-key');
-                if (confirm("Permanently wipe this entry timeline?")) {
-                    delete ageMatrixDataMap[localKey];
+            if (openDropdownKey) {
+                const prev = document.getElementById(`dropdown-${openDropdownKey}`);
+                if (prev) prev.classList.remove('open');
+                openDropdownKey = null;
+            }
+            if (e.target && e.target.classList.contains('delete-btn')) {
+                const key = e.target.getAttribute('data-key');
+                if (confirm("Remove this person from the database?")) {
+                    delete peopleDataMap[key];
                     saveToLocalStorage();
-                    updateMetricBadge();
                     renderTable();
                 }
             }
         });
+        function updateBadges() {
+            const entries = Object.values(peopleDataMap);
+            document.getElementById('live-count-badge').innerText = entries.length;
+            document.getElementById('alive-count-badge').innerText = entries.filter(e => e.status === "Alive").length;
+            document.getElementById('limbo-count-badge').innerText = entries.filter(e => e.status === "Limbo").length;
+        }
+        function getStatusBadgeHtml(status) {
+            if (status === "Alive") {
+                return `<span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/65">Alive</span>`;
+            }
+            if (status === "Limbo") {
+                return `<span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-amber-950/80 text-amber-400 border border-amber-800/65">Limbo</span>`;
+            }
+            return `<span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-slate-900 text-slate-400 border border-slate-700">Deceased</span>`;
+        }
+        function renderTable() {
+            if (activelyEditingKey) return;
+            updateBadges();
+            const tableWrapper = document.getElementById('table-wrapper');
+            const allKeys = Object.keys(peopleDataMap);
+            if (allKeys.length === 0) {
+                tableWrapper.classList.add('hidden');
+                return;
+            }
+            tableWrapper.classList.remove('hidden');
+            let items = allKeys.map(k => {
+                const item = peopleDataMap[k];
+                const fullName = [item.firstName, item.middleName, item.lastName].filter(Boolean).join(" ");
+                const ageInfo = calculateSheetAge(item.birthIso, item.deathIso, item.status);
+                return { localKey: k, ...item, fullName, ageInfo };
+            });
+            if (currentFilter !== "ALL") {
+                items = items.filter(i => i.status === currentFilter);
+            }
+            if (searchQuery) {
+                items = items.filter(i =>
+                    i.fullName.toLowerCase().includes(searchQuery) ||
+                    i.birthDisplay.toLowerCase().includes(searchQuery) ||
+                    i.deathDisplay.toLowerCase().includes(searchQuery) ||
+                    i.status.toLowerCase().includes(searchQuery)
+                );
+            }
+            items.sort((a, b) => {
+                if (currentSort === "birth-asc") return new Date(a.birthIso) - new Date(b.birthIso);
+                if (currentSort === "birth-desc") return new Date(b.birthIso) - new Date(a.birthIso);
+                if (currentSort === "name-asc") return a.fullName.localeCompare(b.fullName);
+                return 0;
+            });
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = items.map(item => `
+                <tr id="row-${item.localKey}" class="hover:bg-slate-900/60 transition-colors text-xs border-b border-slate-800/80">
+                    <td contenteditable="true"
+                        onfocus="handleCellFocus('${item.localKey}')"
+                        onblur="handleNameSave('${item.localKey}', this)"
+                        onkeydown="if(event.key === 'Enter'){event.preventDefault(); this.blur();}"
+                        class="editable-cell px-4 py-3 font-medium text-slate-200 text-center border-r border-slate-800/80 cursor-edit">${item.fullName}</td>
+                    <td class="px-2 py-3 text-center border-r border-slate-800/80 relative">
+                        <div class="relative inline-block text-left w-12 mx-auto">
+                            <button onclick="toggleDropdownMenu('${item.localKey}', event)" class="flex items-center justify-between w-full px-1.5 py-0.5 text-[10px] font-bold border border-slate-800 rounded bg-slate-950/60 text-slate-300 hover:bg-slate-800">
+                                <span class="mx-auto">${item.gender}</span>
+                                <svg class="w-2 h-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div id="dropdown-${item.localKey}" class="dropdown-menu absolute left-0 top-full w-full bg-slate-950 border border-slate-800 rounded-b shadow-xl z-50 py-0.5">
+                                <button onclick="selectGenderOption('${item.localKey}', 'F')" class="block w-full text-center py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800">F</button>
+                                <button onclick="selectGenderOption('${item.localKey}', 'M')" class="block w-full text-center py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800">M</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td contenteditable="true"
+                        onfocus="handleCellFocus('${item.localKey}')"
+                        onblur="handleBirthSave('${item.localKey}', this)"
+                        onkeydown="if(event.key === 'Enter'){event.preventDefault(); this.blur();}"
+                        class="editable-cell px-4 py-3 text-slate-400 text-center border-r border-slate-800/80 cursor-edit">${item.birthDisplay}</td>
+                    <td contenteditable="true"
+                        onfocus="handleCellFocus('${item.localKey}')"
+                        onblur="handleDeathSave('${item.localKey}', this)"
+                        onkeydown="if(event.key === 'Enter'){event.preventDefault(); this.blur();}"
+                        class="editable-cell px-4 py-3 ${item.status === 'Limbo' ? 'text-amber-400/90 italic' : 'text-slate-400'} text-center border-r border-slate-800/80 cursor-edit">${item.deathDisplay || '<span class="text-slate-600">—</span>'}</td>
+                    <td class="px-4 py-3 text-cyan-400/90 font-semibold text-center border-r border-slate-800/80 select-none">${item.ageInfo.text}</td>
+                    <td class="px-3 py-3 text-center border-r border-slate-800/80 select-none">${getStatusBadgeHtml(item.status)}</td>
+                    <td contenteditable="true"
+                        onfocus="handleCellFocus('${item.localKey}')"
+                        onblur="handleVerifiedSave('${item.localKey}', this)"
+                        onkeydown="if(event.key === 'Enter'){event.preventDefault(); this.blur();}"
+                        class="editable-cell px-4 py-3 text-amber-300/80 text-center border-r border-slate-800/80 cursor-edit">${item.lastVerified || '<span class="text-slate-700">—</span>'}</td>
+                    <td class="px-3 py-3 text-center select-none">
+                        <button type="button" data-key="${item.localKey}" class="delete-btn text-red-400 hover:text-red-300 font-bold bg-red-950/40 hover:bg-red-900/40 border border-red-900/30 px-2 py-0.5 rounded text-[11px]">Purge</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        document.getElementById('load-samples-btn').addEventListener('click', function() {
+            const rawEntries = [
+                { first: "King/Emperor", middle: "", last: "Charlemagne", gender: "M", birth: "4/2/0748", death: "1/28/0814", verified: "" },
+                { first: "King", middle: "John of", last: "England", gender: "M", birth: "12/24/1166", death: "10/19/1216", verified: "" },
+                { first: "John", middle: "II of", last: "France", gender: "M", birth: "4/26/1319", death: "4/8/1364", verified: "" },
+                { first: "Louis", middle: "I of", last: "Hungary", gender: "M", birth: "3/5/1326", death: "9/10/1382", verified: "" },
+                { first: "Richard", middle: "II of", last: "England", gender: "M", birth: "1/6/1367", death: "2/14/1400", verified: "" },
+                { first: "Christopher", middle: "", last: "Columbus", gender: "M", birth: "10/31/1451", death: "5/20/1506", verified: "" },
+                { first: "Leonardo", middle: "da", last: "Vinci", gender: "M", birth: "4/15/1452", death: "5/2/1519", verified: "" },
+                { first: "Michelangelo", middle: "di Lodovico Buonarroti", last: "Simoni", gender: "M", birth: "3/6/1475", death: "2/18/1564", verified: "" },
+                { first: "Raffaello", middle: "Sanzio da", last: "Urbino", gender: "M", birth: "3/28/1483", death: "4/6/1520", verified: "" },
+                { first: "Martin", middle: "", last: "Luder", gender: "M", birth: "11/10/1483", death: "2/18/1546", verified: "" },
+                { first: "Henry", middle: "VIII of", last: "England", gender: "M", birth: "6/28/1491", death: "1/28/1547", verified: "" },
+                { first: "Galileo", middle: "", last: "Galilei", gender: "M", birth: "2/15/1564", death: "1/8/1642", verified: "" },
+                { first: "William", middle: "", last: "Shakespeare", gender: "M", birth: "April 1564", death: "4/23/1616", verified: "" },
+                { first: "Thomas", middle: "", last: "Hobbes", gender: "M", birth: "4/5/1588", death: "12/4/1679", verified: "" },
+                { first: "John", middle: "IV of", last: "Portugal", gender: "M", birth: "3/19/1604", death: "11/6/1656", verified: "" },
+                { first: "John", middle: "", last: "Milton", gender: "M", birth: "12/9/1608", death: "11/8/1674", verified: "" },
+                { first: "James", middle: "II of", last: "England", gender: "M", birth: "10/24/1633", death: "9/16/1701", verified: "" },
+                { first: "Louis", middle: "XIV of", last: "France", gender: "M", birth: "9/5/1638", death: "9/1/1715", verified: "" },
+                { first: "Sir", middle: "Isaac", last: "Newton", gender: "M", birth: "1/4/1643", death: "3/31/1727", verified: "" },
+                { first: "William", middle: "", last: "Penn", gender: "M", birth: "10/24/1644", death: "8/10/1718", verified: "" },
+                { first: "Eilif", middle: "", last: "Philipsen", gender: "M", birth: "7/21/1682", death: "6/20/1785", verified: "" },
+                { first: "Ebenezer", middle: "Cobb", last: "II", gender: "M", birth: "3/22/1694", death: "12/8/1801", verified: "" },
+                { first: "Jean", middle: "", last: "Thurel", gender: "M", birth: "9/6/1698", death: "3/10/1807", verified: "" },
+                { first: "Ann", middle: "Simpson", last: "Hutchinson", gender: "F", birth: "3/28/1699", death: "1/4/1801", verified: "" },
+                { first: "Benjamin", middle: "", last: "Franklin", gender: "M", birth: "1/17/1706", death: "4/17/1790", verified: "" },
+                { first: "Samuel", middle: "", last: "Johnson", gender: "M", birth: "9/18/1709", death: "12/13/1784", verified: "" },
+                { first: "Adolf", middle: "Frederick of", last: "Sweden", gender: "M", birth: "5/14/1710", death: "2/12/1771", verified: "" },
+                { first: "George", middle: "", last: "III", gender: "M", birth: "6/4/1738", death: "1/29/1820", verified: "" },
+                { first: "Robert", middle: "Scot", last: "Scott", gender: "M", birth: "10/2/1745", death: "11/3/1823", verified: "" },
+                { first: "Ebenezer", middle: "", last: "Merriam", gender: "M", birth: "February 1751", death: "4/8/1790", verified: "" },
+                { first: "Alexander", middle: "", last: "Hamilton", gender: "M", birth: "1/11/1755", death: "7/12/1804", verified: "" },
+                { first: "William", middle: "Russell", last: "Birch", gender: "M", birth: "4/9/1755", death: "8/7/1834", verified: "" },
+                { first: "Wolfgang", middle: "Amadeus", last: "Mozart", gender: "M", birth: "1/27/1756", death: "12/5/1791", verified: "" },
+                { first: "Noah", middle: "", last: "Webster", gender: "M", birth: "10/16/1758", death: "5/28/1843", verified: "" },
+                { first: "Johann", middle: "Christoph Friedrich von", last: "Schiller", gender: "M", birth: "11/10/1759", death: "5/9/1805", verified: "" },
+                { first: "Napoleon", middle: "", last: "Bonaparte", gender: "M", birth: "8/15/1769", death: "5/5/1821", verified: "" },
+                { first: "Ludwig", middle: "van", last: "Beethoven", gender: "M", birth: "12/16/1770", death: "3/26/1827", verified: "" },
+                { first: "Geert", middle: "Adriaans", last: "Boomgaard", gender: "M", birth: "9/21/1788", death: "2/3/1899", verified: "" },
+                { first: "Margaret", middle: "Ann", last: "Neve", gender: "F", birth: "5/18/1792", death: "4/4/1903", verified: "" },
+                { first: "James", middle: "Barton", last: "Longacre", gender: "M", birth: "8/11/1794", death: "1/1/1869", verified: "" },
+                { first: "William", middle: "", last: "Barber", gender: "M", birth: "5/2/1807", death: "8/31/1879", verified: "" },
+                { first: "Edgar", middle: "Allan", last: "Poe", gender: "M", birth: "1/19/1809", death: "10/7/1849", verified: "" },
+                { first: "Charles", middle: "Robert", last: "Darwin", gender: "M", birth: "2/12/1809", death: "4/19/1882", verified: "" },
+                { first: "William", middle: "Ewart", last: "Gladstone", gender: "M", birth: "12/29/1809", death: "5/19/1898", verified: "" },
+                { first: "Charles", middle: "", last: "Dickens", gender: "M", birth: "2/7/1812", death: "6/9/1870", verified: "" },
+                { first: "Ada", middle: "Byron", last: "Lovelace", gender: "F", birth: "12/10/1815", death: "11/27/1852", verified: "" },
+                { first: "Susan", middle: "B.", last: "Anthony", gender: "F", birth: "2/15/1820", death: "3/13/1906", verified: "" },
+                { first: "John", middle: "Richard", last: "Voorhis", gender: "M", birth: "7/27/1829", death: "2/5/1932", verified: "" },
+                { first: "Lydia", middle: "Ann (Garcelon)", last: "Steward", gender: "F", birth: "10/1/1829", death: "12/25/1931", verified: "" },
+                { first: "Alexandre", middle: "Gustave", last: "Eiffel", gender: "M", birth: "12/15/1832", death: "12/27/1923", verified: "" },
+                { first: "Delavan", middle: "Levant", last: "Leonard", gender: "M", birth: "7/20/1834", death: "1/26/1917", verified: "" },
+                { first: "Rebecca", middle: "Ann", last: "Latimer", gender: "F", birth: "6/10/1835", death: "1/24/1930", verified: "" },
+                { first: "Galusha", middle: "Marion", last: "Cole", gender: "M", birth: "8/15/1837", death: "4/11/1931", verified: "" },
+                { first: "John", middle: "Wilkes", last: "Booth", gender: "M", birth: "5/10/1838", death: "4/26/1865", verified: "" },
+                { first: "Richard", middle: "D'Oyly", last: "Carte", gender: "M", birth: "5/3/1844", death: "4/3/1901", verified: "" },
+                { first: "Carl", middle: "Friedrich", last: "Benz", gender: "M", birth: "11/25/1844", death: "4/4/1929", verified: "" },
+                { first: "Thomas", middle: "Alva", last: "Edison", gender: "M", birth: "2/11/1847", death: "10/18/1931", verified: "" },
+                { first: "Alexander", middle: "Graham", last: "Bell", gender: "M", birth: "3/3/1847", death: "8/2/1922", verified: "" },
+                { first: "John", middle: "Drew", last: "Jr.", gender: "M", birth: "11/13/1853", death: "7/9/1927", verified: "" },
+                { first: "Sir", middle: "Edward Henry", last: "Carson", gender: "M", birth: "2/9/1854", death: "10/22/1935", verified: "" },
+                { first: "Oscar", middle: "Fingal O'Flahertie Wills", last: "Wilde", gender: "M", birth: "10/16/1854", death: "11/30/1900", verified: "" },
+                { first: "Nikola", middle: "", last: "Tesla", gender: "M", birth: "7/10/1856", death: "1/7/1943", verified: "" },
+                { first: "Sir", middle: "Arthur Conan", last: "Doyle", gender: "M", birth: "5/22/1859", death: "7/7/1930", verified: "" },
+                { first: "Samuel", middle: "James", last: "Seymour", gender: "M", birth: "3/28/1860", death: "4/12/1956", verified: "" },
+                { first: "John", middle: "Joseph", last: "Pershing", gender: "M", birth: "9/13/1860", death: "7/15/1948", verified: "" },
+                { first: "John", middle: "Jacob Astor", last: "IV", gender: "M", birth: "7/13/1864", death: "4/15/1912", verified: "" },
+                { first: "Florence", middle: "Ada Bethia", last: "Pannell", gender: "F", birth: "12/26/1868", death: "10/20/1980", verified: "" },
+                { first: "Lord", middle: "Alfred Bruce", last: "Douglas", gender: "M", birth: "10/22/1870", death: "3/20/1945", verified: "" },
+                { first: "Bertrand", middle: "Arthur William", last: "Russell", gender: "M", birth: "5/18/1872", death: "2/2/1970", verified: "" },
+                { first: "Robert", middle: "Lee", last: "Frost", gender: "M", birth: "3/26/1874", death: "1/29/1963", verified: "" },
+                { first: "Sir", middle: "Winston Leonard Spencer", last: "Churchill", gender: "M", birth: "11/30/1874", death: "1/24/1965", verified: "" },
+                { first: "Jeanne", middle: "Louise", last: "Calment", gender: "F", birth: "2/21/1875", death: "8/4/1997", verified: "" },
+                { first: "Albert", middle: "", last: "Einstein", gender: "M", birth: "3/14/1879", death: "4/18/1955", verified: "" },
+                { first: "Porter", middle: "Emerson", last: "Browne", gender: "M", birth: "6/22/1879", death: "9/20/1934", verified: "" },
+                { first: "Lev", middle: "Davidovich", last: "Trotsky", gender: "M", birth: "11/7/1879", death: "8/21/1940", verified: "" },
+                { first: "Gunichi", middle: "", last: "Mikawa", gender: "M", birth: "8/29/1888", death: "2/25/1981", verified: "" },
+                { first: "Johann", middle: "Josef von", last: "Mayer", gender: "M", birth: "8/29/1888", death: "7/21/1952", verified: "" },
+                { first: "Sir", middle: "Charles Spencer Chaplin", last: "Jr.", gender: "M", birth: "4/16/1889", death: "12/25/1977", verified: "" },
+                { first: "Adolf", middle: "", last: "Hitler", gender: "M", birth: "4/20/1889", death: "4/30/1945", verified: "" },
+                { first: "Albert", middle: "Arthur", last: "Bestic", gender: "M", birth: "8/26/1890", death: "12/20/1962", verified: "" },
+                { first: "Agatha", middle: "", last: "Christie", gender: "F", birth: "9/15/1890", death: "1/12/1976", verified: "" },
+                { first: "Ole", middle: "Kirk", last: "Christiansen", gender: "M", birth: "4/7/1891", death: "3/11/1958", verified: "" },
+                { first: "Henry", middle: "James", last: "Tandey", gender: "M", birth: "8/30/1891", death: "12/20/1977", verified: "" },
+                { first: "John", middle: "Ronald Reuel", last: "Tolkien", gender: "M", birth: "1/3/1892", death: "9/2/1973", verified: "" },
+                { first: "Alfred", middle: "Abraham Knopf", last: "Sr.", gender: "M", birth: "9/12/1892", death: "8/11/1984", verified: "" },
+                { first: "Amelia", middle: "Mary", last: "Earhart", gender: "F", birth: "7/24/1897", death: "7/2/1937", verified: "" },
+                { first: "Rudolf", middle: "\"Rudi\"", last: "Dassler", gender: "M", birth: "3/26/1898", death: "10/27/1974", verified: "" },
+                { first: "Buck", middle: "", last: "Ruxton", gender: "M", birth: "3/21/1899", death: "12/5/1936", verified: "" },
+                { first: "Madge", middle: "Elizabeth", last: "Blake", gender: "F", birth: "5/31/1899", death: "2/19/1969", verified: "" },
+                { first: "Ernest", middle: "Miller", last: "Hemingway", gender: "M", birth: "7/21/1899", death: "7/2/1961", verified: "" },
+                { first: "Neil", middle: "", last: "Hamilton", gender: "M", birth: "9/9/1899", death: "9/24/1984", verified: "" },
+                { first: "Emma", middle: "Martina Luigia", last: "Morano", gender: "F", birth: "11/29/1899", death: "4/15/2017", verified: "" },
+                { first: "Elizabeth", middle: "Angela Marguerite", last: "Bowes-Lyon", gender: "F", birth: "8/4/1900", death: "3/30/2002", verified: "" },
+                { first: "Adolf", middle: "\"Adi\"", last: "Dassler", gender: "M", birth: "11/3/1900", death: "9/6/1978", verified: "" },
+                { first: "James", middle: "Mercer Langston", last: "Hughes", gender: "M", birth: "2/1/1901", death: "5/22/1967", verified: "" },
+                { first: "Walter", middle: "Elias", last: "Disney", gender: "M", birth: "12/5/1901", death: "12/15/1966", verified: "" },
+                { first: "Charles", middle: "Leslie", last: "McFarlane", gender: "M", birth: "10/25/1902", death: "9/6/1977", verified: "" },
+                { first: "Alan", middle: "William", last: "Napier-Clavering", gender: "M", birth: "1/7/1903", death: "8/8/1988", verified: "" },
+                { first: "Peter", middle: "", last: "Dawnay", gender: "M", birth: "8/14/1904", death: "7/1/1989", verified: "" },
+                { first: "Richard", middle: "Sperry", last: "Yeoman", gender: "M", birth: "8/15/1904", death: "11/9/1988", verified: "" },
+                { first: "Mildred", middle: "Augustine Wirt", last: "Benson", gender: "F", birth: "7/10/1905", death: "5/28/2002", verified: "" },
+                { first: "Otto", middle: "Adolf", last: "Eichmann", gender: "M", birth: "3/19/1906", death: "6/1/1962", verified: "" },
+                { first: "Angela", middle: "Christine Rose Montagu Douglas", last: "Scott", gender: "F", birth: "12/26/1906", death: "9/28/2000", verified: "" },
+                { first: "César", middle: "Julio Romero", last: "Jr.", gender: "M", birth: "2/15/1907", death: "1/1/1994", verified: "" },
+                { first: "Oliver", middle: "Burgess", last: "Meredith", gender: "M", birth: "11/16/1907", death: "9/9/1997", verified: "" },
+                { first: "Ethel", middle: "May", last: "Caterham", gender: "F", birth: "8/21/1909", death: "", verified: "" },
+                { first: "Marie-Rose", middle: "", last: "Tessier", gender: "F", birth: "5/21/1910", death: "2/10/2026", verified: "" },
+                { first: "Naomi", middle: "Washington", last: "Whitehead", gender: "F", birth: "9/26/1910", death: "", verified: "" },
+                { first: "Lucia", middle: "Laura", last: "Sangenito", gender: "F", birth: "11/22/1910", death: "", verified: "" },
+                { first: "Yolanda", middle: "Beltrão de", last: "Azevedo", gender: "F", birth: "1/13/1911", death: "", verified: "" },
+                { first: "Miyoko", middle: "", last: "Hiroyasu", gender: "F", birth: "1/23/1911", death: "7/29/2025", verified: "" },
+                { first: "Anthony", middle: "Joseph Mancinelli", last: "Sr.", gender: "M", birth: "3/2/1911", death: "9/19/2019", verified: "" },
+                { first: "Shigeko", middle: "", last: "Kagawa", gender: "F", birth: "5/28/1911", death: "8/27/2026", verified: "" },
+                { first: "Ilse", middle: "", last: "Meingast", gender: "F", birth: "3/14/1912", death: "8/23/2026", verified: "" },
+                { first: "Maria", middle: "Jorge Esteves de", last: "Almeida", gender: "F", birth: "5/28/1912", death: "7/8/2026", verified: "" },
+                { first: "Alan", middle: "Mathison", last: "Turing", gender: "M", birth: "6/23/1912", death: "6/7/1954", verified: "" },
+                { first: "Madeleine", middle: "", last: "Dellamonica", gender: "F", birth: "7/23/1912", death: "", verified: "" },
+                { first: "João", middle: "Marinho", last: "Neto", gender: "M", birth: "10/5/1912", death: "", verified: "" },
+                { first: "Maria", middle: "da Conceição", last: "Brito", gender: "F", birth: "12/31/1912", death: "8/22/2026", verified: "" },
+                { first: "Yukie", middle: "", last: "Takahashi", gender: "F", birth: "1/4/1913", death: "", verified: "" },
+                { first: "Tsune", middle: "", last: "Kimura", gender: "F", birth: "1/12/1913", death: "Unverified", verified: "January 2026" },
+                { first: "Rosa", middle: "Louise McCauley", last: "Parks", gender: "F", birth: "2/4/1913", death: "10/24/2005", verified: "" },
+                { first: "Eulalia", middle: "Bravo", last: "Bravo", gender: "F", birth: "2/12/1913", death: "", verified: "" },
+                { first: "Marcelle", middle: "", last: "Pressac", gender: "F", birth: "3/10/1913", death: "9/12/2026", verified: "" },
+                { first: "Haruko", middle: "", last: "Onizuka", gender: "F", birth: "3/18/1913", death: "Unverified", verified: "March 2026" },
+                { first: "Francis", middle: "", last: "Piscatella", gender: "F", birth: "4/20/1913", death: "", verified: "" },
+                { first: "Ichi", middle: "", last: "Kubota", gender: "F", birth: "5/30/1913", death: "", verified: "" },
+                { first: "Dorothy", middle: "Mildred", last: "Allison", gender: "F", birth: "7/5/1913", death: "", verified: "" },
+                { first: "Koyu", middle: "", last: "Morita", gender: "F", birth: "7/12/1913", death: "", verified: "" },
+                { first: "Yasue", middle: "", last: "Saitō", gender: "F", birth: "7/17/1913", death: "Unverified", verified: "January 2026" },
+                { first: "Luisa", middle: "", last: "Maggioni", gender: "F", birth: "7/19/1913", death: "", verified: "" },
+                { first: "Rosa", middle: "Laura Torres", last: "Barra", gender: "F", birth: "7/20/1913", death: "", verified: "" },
+                { first: "Teresa", middle: "Fernandez", last: "Casado", gender: "F", birth: "7/29/1913", death: "", verified: "" },
+                { first: "Chitose", middle: "", last: "Awata", gender: "F", birth: "8/20/1913", death: "", verified: "" },
+                { first: "Kiyoko", middle: "", last: "Kondō", gender: "F", birth: "9/1/1913", death: "", verified: "" },
+                { first: "Aileen", middle: "Emily", last: "Kars", gender: "F", birth: "9/12/1913", death: "", verified: "" },
+                { first: "Doris", middle: "", last: "Noreen", gender: "F", birth: "9/15/1913", death: "", verified: "" },
+                { first: "Ayako", middle: "", last: "Kyotani", gender: "F", birth: "9/29/1913", death: "Unverified", verified: "September 2026" },
+                { first: "Ken", middle: "", last: "Weeks", gender: "M", birth: "10/5/1913", death: "", verified: "" },
+                { first: "Samuele", middle: "Henriette Anne", last: "Goustille", gender: "F", birth: "10/12/1913", death: "4/3/2026", verified: "" },
+                { first: "Misao", middle: "", last: "Kobayashi", gender: "F", birth: "10/27/1913", death: "6/19/2026", verified: "" },
+                { first: "Tsutae", middle: "", last: "Hayashi", gender: "F", birth: "10/28/1913", death: "", verified: "" },
+                { first: "Zoraida", middle: "", last: "Montezuma", gender: "F", birth: "10/31/1913", death: "", verified: "" },
+                { first: "Take", middle: "", last: "Satō", gender: "F", birth: "11/21/1913", death: "", verified: "" },
+                { first: "Margaret", middle: "", last: "Cryer", gender: "F", birth: "11/25/1913", death: "6/23/2026", verified: "" },
+                { first: "Shime", middle: "", last: "Nakanishi", gender: "F", birth: "1/3/1914", death: "Unverified", verified: "March 2026" },
+                { first: "Elizabeth", middle: "\"Betty\"", last: "Werrenrath", gender: "F", birth: "1/28/1914", death: "", verified: "" },
+                { first: "Lina", middle: "", last: "Anundsen", gender: "F", birth: "11/12/1914", death: "8/2/2026", verified: "" },
+                { first: "Mary", middle: "Jane", last: "Rogerson", gender: "F", birth: "10/8/1915", death: "9/15/1935", verified: "" },
+                { first: "Maria", middle: "Francesca", last: "Pastore", gender: "F", birth: "10/16/1915", death: "7/30/2026", verified: "" },
+                { first: "Tsutomu", middle: "", last: "Yamaguchi", gender: "M", birth: "3/16/1916", death: "1/4/2010", verified: "" },
+                { first: "Stafford", middle: "Alois", last: "Repp", gender: "M", birth: "4/26/1918", death: "11/5/1974", verified: "" },
+                { first: "Nelson", middle: "Rolihlahla", last: "Mandela", gender: "M", birth: "7/18/1918", death: "12/5/2013", verified: "" },
+                { first: "Efrem", middle: "Zimbalist", last: "Jr.", gender: "M", birth: "11/30/1918", death: "5/2/2014", verified: "" },
+                { first: "Joseph", middle: "Patrick", last: "Cranshaw", gender: "M", birth: "6/17/1919", death: "12/28/2005", verified: "" },
+                { first: "Howard", middle: "Tracy", last: "Hall", gender: "M", birth: "10/20/1919", death: "7/25/2008", verified: "" },
+                { first: "Jackson", middle: "DeForest", last: "Kelley", gender: "M", birth: "1/20/1920", death: "6/11/1999", verified: "" },
+                { first: "Lewis", middle: "Gilbert", last: "Wilson", gender: "M", birth: "1/28/1920", death: "8/9/2000", verified: "" },
+                { first: "James", middle: "Montgomery", last: "Doohan", gender: "M", birth: "3/3/1920", death: "7/20/2005", verified: "" },
+                { first: "Godtfred", middle: "Kirk", last: "Christiansen", gender: "M", birth: "7/8/1920", death: "7/13/1995", verified: "" },
+                { first: "Rosalind", middle: "Elsie", last: "Franklin", gender: "F", birth: "7/25/1920", death: "4/16/1958", verified: "" },
+                { first: "Eugene", middle: "Wesley Roddenberry", last: "Sr.", gender: "M", birth: "8/19/1921", death: "10/24/1991", verified: "" },
+                { first: "Betty", middle: "Marion", last: "White", gender: "F", birth: "1/17/1922", death: "12/31/2021", verified: "" },
+                { first: "Sir", middle: "Christopher Frank Carandini", last: "Lee", gender: "M", birth: "5/27/1922", death: "6/7/2015", verified: "" },
+                { first: "Stanley", middle: "Martin", last: "Lieber", gender: "M", birth: "12/28/1922", death: "11/12/2018", verified: "" },
+                { first: "Robert", middle: "Francis", last: "Hastings", gender: "M", birth: "4/18/1925", death: "6/30/2014", verified: "" },
+                { first: "Elizabeth", middle: "Alexandra Mary", last: "Windsor", gender: "F", birth: "4/21/1926", death: "9/8/2022", verified: "" },
+                { first: "Sir", middle: "David Frederick", last: "Attenborough", gender: "M", birth: "5/8/1926", death: "", verified: "" },
+                { first: "Marilyn", middle: "", last: "Monroe", gender: "F", birth: "6/1/1926", death: "8/4/1962", verified: "" },
+                { first: "Mel", middle: "", last: "Brooks", gender: "M", birth: "6/28/1926", death: "", verified: "" },
+                { first: "Adam", middle: "", last: "West", gender: "M", birth: "9/19/1928", death: "6/9/2017", verified: "" },
+                { first: "Harrison", middle: "Ruffin", last: "Tyler", gender: "M", birth: "11/9/1928", death: "5/25/2025", verified: "" },
+                { first: "Martin", middle: "Luther King", last: "Jr.", gender: "M", birth: "1/15/1929", death: "4/4/1968", verified: "" },
+                { first: "Dolores", middle: "", last: "Huerta", gender: "F", birth: "4/10/1930", death: "10/28/2026", verified: "" },
+                { first: "Clive", middle: "Selsby", last: "Revill", gender: "M", birth: "4/18/1930", death: "3/11/2025", verified: "" },
+                { first: "Clint", middle: "Eastwood", last: "Jr.", gender: "M", birth: "5/31/1930", death: "", verified: "" },
+                { first: "Richard", middle: "St John Francis", last: "Harris", gender: "M", birth: "10/1/1930", death: "10/25/2002", verified: "" },
+                { first: "William", middle: "Alan", last: "Shatner", gender: "M", birth: "3/22/1931", death: "", verified: "" },
+                { first: "Leonard", middle: "Simon", last: "Nimoy", gender: "M", birth: "3/26/1931", death: "2/27/2015", verified: "" },
+                { first: "Daniel", middle: "M.", last: "Carney", gender: "M", birth: "10/6/1931", death: "11/13/2026", verified: "" },
+                { first: "Frank", middle: "John Gorshin", last: "Jr.", gender: "M", birth: "4/5/1933", death: "5/17/2005", verified: "" },
+                { first: "Julia", middle: "Chalene", last: "Newmeyer", gender: "F", birth: "8/16/1933", death: "", verified: "" },
+                { first: "Donald", middle: "Roan", last: "Dunagan", gender: "M", birth: "8/16/1934", death: "11/4/2026", verified: "" },
+                { first: "Dame", middle: "Judith Olivia", last: "Dench", gender: "F", birth: "12/9/1934", death: "", verified: "" },
+                { first: "Dame", middle: "Margaret Natalie", last: "Smith", gender: "F", birth: "12/28/1934", death: "9/27/2024", verified: "" },
+                { first: "Lee", middle: "Ann", last: "Meriwether", gender: "F", birth: "5/27/1935", death: "", verified: "" },
+                { first: "Dame", middle: "", last: "Julie Andrews", gender: "F", birth: "10/1/1935", death: "", verified: "" },
+                { first: "Pope", middle: "", last: "Francis", gender: "M", birth: "12/17/1936", death: "4/21/2025", verified: "" },
+                { first: "George", middle: "", last: "Takei", gender: "M", birth: "4/20/1937", death: "", verified: "" },
+                { first: "Morgan", middle: "", last: "Freeman", gender: "M", birth: "6/1/1937", death: "", verified: "" },
+                { first: "John", middle: "Davison Rockefeller", last: "IV", gender: "M", birth: "6/18/1937", death: "11/6/2026", verified: "" },
+                { first: "Philip", middle: "Hampson", last: "Knight", gender: "M", birth: "2/24/1938", death: "", verified: "" },
+                { first: "Frank", middle: "Lawrence", last: "Carney", gender: "M", birth: "4/26/1938", death: "12/2/2020", verified: "" },
+                { first: "Sir", middle: "Ian Murray", last: "McKellen", gender: "M", birth: "5/25/1939", death: "", verified: "" },
+                { first: "Mary", middle: "Jean \"Lily\"", last: "Tomlin", gender: "F", birth: "9/1/1939", death: "", verified: "" },
+                { first: "Margaret", middle: "Eleanor", last: "Atwood", gender: "F", birth: "11/18/1939", death: "", verified: "" },
+                { first: "Burt", middle: "", last: "Ward", gender: "M", birth: "7/6/1940", death: "", verified: "" },
+                { first: "Sir", middle: "Patrick Hewes", last: "Stewart", gender: "M", birth: "7/13/1940", death: "10/28/2026", verified: "" },
+                { first: "Paul", middle: "Hamilton Williams", last: "Jr.", gender: "M", birth: "9/19/1940", death: "", verified: "" },
+                { first: "Sir", middle: "Michael John", last: "Gambon", gender: "M", birth: "10/19/1940", death: "9/27/2023", verified: "" },
+                { first: "Peter", middle: "Claver", last: "Cullen", gender: "M", birth: "7/28/1941", death: "8/26/2026", verified: "" },
+                { first: "Stephen", middle: "William", last: "Hawking", gender: "M", birth: "1/8/1942", death: "3/14/2018", verified: "" },
+                { first: "Kenneth", middle: "\"Patriotic Kenny\"", last: "Jary", gender: "M", birth: "1/29/1942", death: "5/16/2026", verified: "" },
+                { first: "Harrison", middle: "", last: "Ford", gender: "M", birth: "7/13/1942", death: "", verified: "" },
+                { first: "Robert", middle: "Norman", last: "Ross", gender: "M", birth: "10/29/1942", death: "7/4/1995", verified: "" },
+                { first: "Sir", middle: "Karl William Pamp", last: "Jenkins", gender: "M", birth: "2/17/1944", death: "", verified: "" },
+                { first: "Dame", middle: "", last: "Helen Mirren", gender: "F", birth: "7/24/1945", death: "", verified: "" },
+                { first: "Dolly", middle: "Rebecca", last: "Parton", gender: "F", birth: "1/19/1946", death: "8/25/2026", verified: "" },
+                { first: "Franklin", middle: "Wendell", last: "Welker", gender: "M", birth: "3/12/1946", death: "", verified: "" },
+                { first: "Timothy", middle: "James", last: "Curry", gender: "M", birth: "4/19/1946", death: "8/25/2026", verified: "" },
+                { first: "Charles", middle: "Morley", last: "Baxter", gender: "M", birth: "5/13/1947", death: "", verified: "" },
+                { first: "Arnold", middle: "Alois", last: "Schwarzenegger", gender: "M", birth: "7/30/1947", death: "", verified: "" },
+                { first: "Mary", middle: "Temple", last: "Grandin", gender: "F", birth: "8/29/1947", death: "", verified: "" },
+                { first: "Stephen", middle: "Edwin", last: "King", gender: "M", birth: "9/21/1947", death: "", verified: "" },
+                { first: "Kjeld", middle: "Kirk", last: "Kristiansen", gender: "M", birth: "12/27/1947", death: "", verified: "" },
+                { first: "John", middle: "Sherwood de Lancie", last: "Jr.", gender: "M", birth: "3/20/1948", death: "", verified: "" },
+                { first: "Charles", middle: "Philip Arthur", last: "George", gender: "M", birth: "11/14/1948", death: "", verified: "" },
+                { first: "Samuel", middle: "Leroy", last: "Jackson", gender: "M", birth: "12/21/1948", death: "", verified: "" },
+                { first: "Brent", middle: "Jay", last: "Spiner", gender: "M", birth: "2/2/1949", death: "", verified: "" },
+                { first: "Cheryl", middle: "Gates", last: "McFadden", gender: "F", birth: "3/2/1949", death: "", verified: "" },
+                { first: "Michael", middle: "", last: "Keaton", gender: "M", birth: "9/5/1951", death: "", verified: "" },
+                { first: "Mark", middle: "Richard", last: "Hamill", gender: "M", birth: "9/25/1951", death: "", verified: "" },
+                { first: "Michael", middle: "", last: "Dorn", gender: "M", birth: "12/9/1952", death: "", verified: "" },
+                { first: "Timothy", middle: "Alan", last: "Dick", gender: "M", birth: "6/13/1953", death: "", verified: "" },
+                { first: "Anthony", middle: "Marc", last: "Shalhoub", gender: "M", birth: "10/9/1953", death: "", verified: "" },
+                { first: "Jackie", middle: "", last: "Chan", gender: "M", birth: "4/7/1954", death: "", verified: "" },
+                { first: "Rowan", middle: "Sebastian", last: "Atkinson", gender: "M", birth: "1/6/1955", death: "", verified: "" },
+                { first: "Jonathan", middle: "Kimble", last: "Simmons", gender: "M", birth: "1/9/1955", death: "", verified: "" },
+                { first: "Steven", middle: "Paul", last: "Jobs", gender: "M", birth: "2/24/1955", death: "10/5/2011", verified: "" },
+                { first: "Katherine", middle: "Kiernan Maria", last: "Mulgrew", gender: "F", birth: "4/29/1955", death: "", verified: "" },
+                { first: "Pope", middle: "", last: "XIV", gender: "M", birth: "9/14/1955", death: "", verified: "" },
+                { first: "William", middle: "Henry Gates", last: "III", gender: "M", birth: "10/28/1955", death: "", verified: "" },
+                { first: "William", middle: "Sanford", last: "Nye", gender: "M", birth: "11/27/1955", death: "", verified: "" },
+                { first: "Kevin", middle: "", last: "Conroy", gender: "M", birth: "11/30/1955", death: "11/10/2022", verified: "" },
+                { first: "Thomas", middle: "Jeffrey", last: "Hanks", gender: "M", birth: "7/9/1956", death: "", verified: "" },
+                { first: "Carrie", middle: "Frances", last: "Fisher", gender: "F", birth: "10/21/1956", death: "12/27/2016", verified: "" },
+                { first: "Frank", middle: "Theodore", last: "Levine", gender: "M", birth: "5/29/1957", death: "", verified: "" },
+                { first: "Paul", middle: "McClaran", last: "Dini", gender: "M", birth: "8/7/1957", death: "", verified: "" },
+                { first: "Michael", middle: "Joseph", last: "Jackson", gender: "M", birth: "8/29/1958", death: "6/25/2009", verified: "" },
+                { first: "Neil", middle: "deGrasse", last: "Tyson", gender: "M", birth: "10/5/1958", death: "", verified: "" },
+                { first: "Loren", middle: "", last: "Lester", gender: "M", birth: "10/4/1960", death: "", verified: "" },
+                { first: "Timothy", middle: "Donald", last: "Cook", gender: "M", birth: "11/1/1960", death: "", verified: "" },
+                { first: "Jeffrey", middle: "Kent \"Swampy\"", last: "Marsh", gender: "M", birth: "12/9/1960", death: "", verified: "" },
+                { first: "Diana", middle: "Frances", last: "Spencer", gender: "F", birth: "7/1/1961", death: "8/31/1997", verified: "" },
+                { first: "David", middle: "Brent", last: "Baszucki", gender: "M", birth: "1/20/1963", death: "", verified: "" },
+                { first: "Dan", middle: "", last: "Povenmire", gender: "M", birth: "9/18/1963", death: "", verified: "" },
+                { first: "Paul", middle: "William", last: "Dobson", gender: "M", birth: "12/7/1963", death: "", verified: "" },
+                { first: "Richard", middle: "Russell Riordan", last: "Jr.", gender: "M", birth: "6/5/1964", death: "", verified: "" },
+                { first: "Robert", middle: "John Downey", last: "Jr.", gender: "M", birth: "4/4/1965", death: "", verified: "" },
+                { first: "Laurence", middle: "Gregory", last: "Watkins", gender: "M", birth: "6/9/1965", death: "", verified: "" },
+                { first: "Joanne", middle: "K.", last: "Rowling", gender: "F", birth: "7/31/1965", death: "", verified: "" },
+                { first: "Michael", middle: "", last: "Hegner", gender: "M", birth: "6/19/1966", death: "", verified: "" },
+                { first: "Mark", middle: "", last: "Oliver", gender: "M", birth: "9/21/1966", death: "", verified: "" },
+                { first: "Gordon", middle: "James", last: "Ramsay", gender: "M", birth: "11/8/1966", death: "", verified: "" },
+                { first: "Kathleen", middle: "", last: "Barr", gender: "F", birth: "4/6/1967", death: "", verified: "" },
+                { first: "Erik", middle: "Stefan", last: "Cassel", gender: "M", birth: "9/16/1967", death: "2/11/2013", verified: "" },
+                { first: "Daniel", middle: "Wroughton", last: "Craig", gender: "M", birth: "3/2/1968", death: "", verified: "" },
+                { first: "Kristin", middle: "Dawn", last: "Chenoweth", gender: "F", birth: "7/24/1968", death: "", verified: "" },
+                { first: "Willard", middle: "Carroll Smith", last: "II", gender: "M", birth: "9/25/1968", death: "", verified: "" },
+                { first: "Mariah", middle: "", last: "Carey", gender: "F", birth: "3/27/1969", death: "", verified: "" },
+                { first: "Karl", middle: "", last: "Bushby", gender: "M", birth: "3/30/1969", death: "", verified: "" },
+                { first: "Matthew", middle: "Lyn", last: "Lillard", gender: "M", birth: "1/24/1970", death: "", verified: "" },
+                { first: "Keith", middle: "", last: "Silverstein", gender: "M", birth: "12/24/1970", death: "", verified: "" },
+                { first: "David", middle: "John", last: "Tennant", gender: "M", birth: "4/18/1971", death: "", verified: "" },
+                { first: "Idina", middle: "Kim", last: "Menzel", gender: "F", birth: "5/30/1971", death: "", verified: "" },
+                { first: "Alan", middle: "", last: "Marriott", gender: "M", birth: "7/19/1971", death: "", verified: "" },
+                { first: "Samuel", middle: "Vincent", last: "Khouth", gender: "M", birth: "10/5/1971", death: "", verified: "" },
+                { first: "Kirby", middle: "Robert", last: "Morrow", gender: "M", birth: "8/28/1973", death: "11/18/2020", verified: "" },
+                { first: "Brian", middle: "", last: "Dobson", gender: "M", birth: "9/9/1973", death: "", verified: "" },
+                { first: "Jillian", middle: "Leigh", last: "McKarus", gender: "F", birth: "2/18/1974", death: "", verified: "" },
+                { first: "Tommy", middle: "", last: "Andreasen", gender: "M", birth: "4/21/1974", death: "", verified: "" },
+                { first: "Brent", middle: "Graeme", last: "Miller", gender: "M", birth: "10/28/1974", death: "", verified: "" },
+                { first: "Leonardo", middle: "Wilhelm", last: "DiCaprio", gender: "M", birth: "11/11/1974", death: "", verified: "" },
+                { first: "Thomas", middle: "", last: "Astruc", gender: "M", birth: "1/18/1975", death: "", verified: "" },
+                { first: "John", middle: "Patrick", last: "Ternus", gender: "M", birth: "5/19/1975", death: "", verified: "" },
+                { first: "Benedict", middle: "Timothy Carlton", last: "Cumberbatch", gender: "M", birth: "7/19/1976", death: "", verified: "" },
+                { first: "Thomas", middle: "Kirk", last: "Kristiansen", gender: "M", birth: "2/18/1979", death: "", verified: "" },
+                { first: "Lin-Manuel", middle: "", last: "Miranda", gender: "M", birth: "1/16/1980", death: "", verified: "" },
+                { first: "Vincent", middle: "", last: "Tong", gender: "M", birth: "5/2/1980", death: "", verified: "" },
+                { first: "Christopher", middle: "Robert", last: "Evans", gender: "M", birth: "6/13/1981", death: "", verified: "" },
+                { first: "Darrell", middle: "Lynn Bell", last: "Jr.", gender: "M", birth: "7/2/1981", death: "", verified: "" },
+                { first: "Michael", middle: "", last: "Adamthwaite", gender: "M", birth: "9/1/1981", death: "", verified: "" },
+                { first: "William", middle: "Arthur Philip", last: "Louis", gender: "M", birth: "6/21/1982", death: "", verified: "" },
+                { first: "Henry", middle: "William Dalgliesh", last: "Cavill", gender: "M", birth: "5/5/1983", death: "", verified: "" },
+                { first: "Matthew", middle: "Ryan", last: "Meese", gender: "M", birth: "10/10/1983", death: "", verified: "" },
+                { first: "Henry", middle: "Charles Albert", last: "David", gender: "M", birth: "9/15/1984", death: "", verified: "" },
+                { first: "Xdarzethx", middle: "/", last: "Darzeth", gender: "M", birth: "2/7/1985", death: "", verified: "" },
+                { first: "Natalie", middle: "Ellen Thomas", last: "Madsen", gender: "F", birth: "5/23/1985", death: "", verified: "" },
+                { first: "Andrew", middle: "Michael Scott", last: "Francis", gender: "M", birth: "5/27/1985", death: "", verified: "" },
+                { first: "Jeremy", middle: "Jesse", last: "Warner", gender: "M", birth: "7/18/1985", death: "", verified: "" },
+                { first: "Jason", middle: "Lee", last: "Gray", gender: "M", birth: "8/2/1985", death: "", verified: "" },
+                { first: "Michael", middle: "David", last: "Stevens", gender: "M", birth: "1/23/1986", death: "", verified: "" },
+                { first: "Matthew", middle: "Robert", last: "Patrick", gender: "M", birth: "11/15/1986", death: "", verified: "" },
+                { first: "James", middle: "", last: "Perry", gender: "M", birth: "2/27/1987", death: "", verified: "" },
+                { first: "Whitney", middle: "Marissa", last: "Call", gender: "F", birth: "6/2/1987", death: "", verified: "" },
+                { first: "Adam", middle: "Michael", last: "Berg", gender: "M", birth: "8/16/1988", death: "", verified: "" },
+                { first: "Stacey", middle: "Jerome", last: "Harkey", gender: "M", birth: "8/19/1988", death: "", verified: "" },
+                { first: "Stephen", middle: "", last: "Meek", gender: "M", birth: "11/19/1988", death: "", verified: "" },
+                { first: "Mallory", middle: "Ruthanne", last: "Everton", gender: "F", birth: "9/20/1989", death: "", verified: "" },
+                { first: "Christopher", middle: "Lund", last: "Nissen", gender: "M", birth: "1/31/1992", death: "", verified: "" },
+                { first: "Zachary", middle: "\"Zack\"", last: "Dziadul", gender: "M", birth: "12/28/1992", death: "", verified: "" },
+                { first: "Charles", middle: "James", last: "Kirk", gender: "M", birth: "10/14/1993", death: "9/10/2025", verified: "" },
+                { first: "Thomas", middle: "Stanley", last: "Holland", gender: "M", birth: "6/1/1996", death: "", verified: "" },
+                { first: "Sam", middle: "", last: "Beres", gender: "M", birth: "6/14/1996", death: "", verified: "" },
+                { first: "Craig", middle: "", last: "Fitzpatrick", gender: "M", birth: "10/22/1996", death: "", verified: "" },
+                { first: "KreekCraft", middle: "", last: "KreekCraft", gender: "M", birth: "1/28/1997", death: "", verified: "" },
+                { first: "Zachary", middle: "Neil", last: "Tarnopol", gender: "M", birth: "4/13/1998", death: "", verified: "" },
+                { first: "James", middle: "Stephen", last: "Donaldson", gender: "M", birth: "5/7/1998", death: "", verified: "" },
+                { first: "Lucas", middle: "Andrew", last: "Edwards", gender: "M", birth: "6/13/2000", death: "", verified: "" },
+                { first: "01G", middle: "", last: "01G", gender: "M", birth: "10/2/2000", death: "", verified: "" },
+                { first: "David", middle: "", last: "Jahn", gender: "M", birth: "8/11/2003", death: "", verified: "" },
+                { first: "John", middle: "", last: "Casterline", gender: "M", birth: "8/25/2003", death: "", verified: "" },
+                { first: "J.B.", middle: "", last: "Ryder", gender: "M", birth: "March 2007", death: "", verified: "" },
+                { first: "Levi", middle: "", last: "Bell", gender: "M", birth: "2/4/2010", death: "", verified: "" },
+                { first: "George", middle: "Alexander", last: "Louis", gender: "M", birth: "7/22/2013", death: "", verified: "" },
+                { first: "Charlotte", middle: "Elizabeth", last: "Diana", gender: "F", birth: "5/2/2015", death: "", verified: "" },
+                { first: "Louis", middle: "Arthur", last: "Charles", gender: "M", birth: "4/23/2018", death: "", verified: "" },
+                { first: "Archie", middle: "Harrison", last: "Mountbatten-Windsor", gender: "M", birth: "5/6/2019", death: "", verified: "" },
+                { first: "Lilibet", middle: "Diana", last: "Mountbatten-Windsor", gender: "F", birth: "6/4/2021", death: "", verified: "" }
+            ];
 
-        document.getElementById('submit-btn').addEventListener('click', function() {
-            if (this.disabled) return;
+            const existingKeys = new Set();
+            Object.values(peopleDataMap).forEach(p => {
+                const fullN = [p.firstName, p.middleName, p.lastName].filter(Boolean).join(" ").toLowerCase();
+                existingKeys.add(`${fullN}|${p.birthDisplay.toLowerCase()}`);
+            });
 
-            const firstNameInput = document.getElementById('form-first-name');
-            const middleNameInput = document.getElementById('form-middle-name');
-            const lastNameInput = document.getElementById('form-last-name');
+            rawEntries.forEach((entry, idx) => {
+                const firstName = entry.first;
+                const middleName = entry.middle;
+                const lastName = entry.last;
 
-            const timeData = getFormDateTimeData();
-            if (!timeData) return;
+                const fullN = [firstName, middleName, lastName].filter(Boolean).join(" ");
+                const pBirth = parseHistoricalDate(entry.birth);
+                if (!pBirth) return;
+                const birthDisp = formatSheetDate(pBirth.date, pBirth.isMonthOnly);
+                
+                const uniqueSig = `${fullN.toLowerCase()}|${birthDisp.toLowerCase()}`;
+                if (existingKeys.has(uniqueSig)) return; // Skip duplicates by default
 
-            const localKey = 'id_' + Date.now();
-            ageMatrixDataMap[localKey] = { 
-                firstName: firstNameInput.value.trim(), 
-                middleName: middleNameInput.value.trim(), 
-                lastName: lastNameInput.value.trim(), 
-                gender: activeGender,
-                birthDate: timeData.combinedDateTimeString,
-                hasTime: timeData.hasTime,
-                originalTypedFormat: timeData.originalTypedFormat
-            };
-
+                existingKeys.add(uniqueSig);
+                const status = computeStatus(entry.death);
+                const pDeath = status === "Deceased" ? parseHistoricalDate(entry.death) : null;
+                const key = 'entry_' + idx + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+                
+                peopleDataMap[key] = {
+                    firstName,
+                    middleName,
+                    lastName,
+                    gender: entry.gender,
+                    birthIso: pBirth.date.toISOString(),
+                    birthDisplay: birthDisp,
+                    deathIso: pDeath ? pDeath.date.toISOString() : null,
+                    deathDisplay: status === "Limbo" ? "Unverified" : (pDeath ? formatSheetDate(pDeath.date, pDeath.isMonthOnly) : ""),
+                    status,
+                    lastVerified: entry.verified
+                };
+            });
             saveToLocalStorage();
-            updateMetricBadge();
             renderTable();
-            resetFormDefaults();
         });
-
-        setDefaultTimeToDash();
         updateSubmitButtonState();
-        updateMetricBadge();
         renderTable();
-        
         setInterval(renderTable, 1000);
     </script>
 </body>
