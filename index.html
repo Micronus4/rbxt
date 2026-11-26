@@ -345,7 +345,7 @@
                     birthPreview.innerText = "Invalid Date Format";
                     birthPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
                 } else if (pBirth.date > new Date()) {
-                    birthPreview.innerText = "Invalid Entry";
+                    birthPreview.innerText = "Future Birthdate";
                     birthPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
                 } else if (pDeath && pBirth.date > pDeath.date) {
                     birthPreview.innerText = "After Death Date";
