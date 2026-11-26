@@ -72,7 +72,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Add Entry Form -->
         <div class="bg-slate-900/90 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-800 mb-6">
             <h2 class="text-lg font-bold text-slate-200 mb-5 tracking-wide font-mono border-b border-slate-800 pb-2">Add Entry</h2>
@@ -100,7 +99,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Row 2: Birth, Death, Status/Limbo, Submit -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-start pt-1">
                     <!-- Birth Date -->
@@ -131,7 +129,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Controls: Find in List & Sort Data (Sticky Top Bar) -->
         <div id="controls-wrapper" class="sticky top-0 z-30 bg-[#05070c]/95 backdrop-blur-sm p-3 sm:p-4 rounded-b-lg border border-slate-800 mb-4 hidden flex-col md:flex-row justify-between items-stretch md:items-center gap-3 shadow-xl">
             <!-- Find in List -->
@@ -154,7 +151,6 @@
                 </select>
             </div>
         </div>
-
         <!-- Data Table -->
         <div id="table-wrapper" class="bg-slate-900 rounded-lg shadow-xl border border-slate-800 hidden">
             <table class="min-w-full divide-y divide-slate-800 text-left text-xs sm:text-sm font-mono">
@@ -174,12 +170,10 @@
             </table>
         </div>
     </div>
-
     <script>
         const STORAGE_KEY = 'longevity_database_v13';
         const GOOGLE_SHEET_ID = '10WPFH-kWmToIx4XMjdwGf9yiAfeuBxLTEELCcnHwjEs';
         const GOOGLE_SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("People's Ages")}`;
-
         let peopleDataMap = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         let activeGender = "";
         let openDropdownKey = null;
@@ -187,12 +181,10 @@
         let currentFilter = "ALL";
         let currentSort = "birth-asc";
         let searchQuery = "";
-
         const submitBtnEnabledClass = "w-full bg-cyan-800 hover:bg-cyan-700 text-slate-200 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-sm cursor-pointer text-xs h-10 font-mono tracking-wider uppercase";
         const submitBtnDisabledClass = "w-full bg-slate-800 text-slate-600 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-xs h-10 font-mono tracking-wider uppercase";
         const btnActiveStyle = "flex-1 h-full text-[11px] font-bold rounded bg-cyan-800 text-slate-200 transition-colors shadow-sm";
         const btnInactiveStyle = "flex-1 h-full text-[11px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors";
-
         const monthMap = {
             'january': 0, 'jan': 0, 'januery': 0,
             'february': 1, 'feb': 1, 'febuary': 1, 'febrary': 1,
@@ -207,12 +199,10 @@
             'november': 10, 'nov': 10,
             'december': 11, 'dec': 11
         };
-
         function parseHistoricalDate(rawText) {
             if (!rawText) return null;
             let str = rawText.trim();
             if (!str) return null;
-
             // Handle ISO YYYY-MM-DD format (returned by Google Sheets CSV export)
             const isoMatch = str.match(/^(\d{1,4})-(\d{1,2})-(\d{1,2})$/);
             if (isoMatch) {
@@ -226,7 +216,6 @@
                 if (dt.getMonth() !== m) return null;
                 return { date: dt, isMonthOnly: false };
             }
-
             // Handle M/D/YYYY format
             const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{1,4})$/);
             if (slashMatch) {
@@ -240,7 +229,6 @@
                 if (dt.getMonth() !== m) return null;
                 return { date: dt, isMonthOnly: false };
             }
-
             // Handle "Month YYYY" format
             const monthYearMatch = str.toLowerCase().replace(/,/g, '').match(/^([a-z]+)\s+(\d{1,4})$/);
             if (monthYearMatch && monthMap.hasOwnProperty(monthYearMatch[1])) {
@@ -251,7 +239,6 @@
                 dt.setHours(0, 0, 0, 0);
                 return { date: dt, isMonthOnly: true };
             }
-
             // Handle "Month D, YYYY" or "D Month YYYY"
             let cleaned = str.toLowerCase().replace(/(\b\d+)(st|nd|rd|th)\b/g, '$1').replace(/\bof\b/g, ' ').replace(/,/g, ' ').trim();
             const parts = cleaned.split(/\s+/);
@@ -275,7 +262,6 @@
             }
             return null;
         }
-
         function formatSheetDate(dateObj, isMonthOnly, rawFallback) {
             if (!dateObj) return rawFallback || "";
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -287,57 +273,46 @@
             const y = dateObj.getFullYear() < 1000 ? String(dateObj.getFullYear()).padStart(4, '0') : dateObj.getFullYear();
             return `${m}/${d}/${y}`;
         }
-
         function computeStatus(deathRaw) {
             if (!deathRaw || deathRaw.trim() === "") return "Alive";
             if (deathRaw.trim().toLowerCase() === "unverified") return "Limbo";
             return "Deceased";
         }
-
         function calculateSheetAge(birthIso, deathIso, status) {
             const birthDate = new Date(birthIso);
             const endDate = (status === "Deceased" && deathIso) ? new Date(deathIso) : new Date();
             if (isNaN(birthDate.getTime()) || birthDate > endDate) return { text: "Invalid", numericYears: 0 };
-
             let years = endDate.getFullYear() - birthDate.getFullYear();
             let months = endDate.getMonth() - birthDate.getMonth();
             let days = endDate.getDate() - birthDate.getDate();
-
             if (days < 0) {
                 months--;
                 const prevMonthDays = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
                 days += prevMonthDays;
             }
             if (months < 0) { years--; months += 12; }
-
             return {
                 text: `${years} ${years === 1 ? 'year' : 'years'}`,
                 numericYears: years + (months / 12) + (days / 365.25)
             };
         }
-
         function saveToLocalStorage() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(peopleDataMap));
         }
-
         function getFormValidation() {
             const firstName = document.getElementById('form-first-name').value.trim();
             const lastName = document.getElementById('form-last-name').value.trim();
             const birthRaw = document.getElementById('form-birth-date').value.trim();
             const deathRaw = document.getElementById('form-death-date').value.trim();
-
             if (!firstName || !lastName || !activeGender || !birthRaw) return null;
-
             const parsedBirth = parseHistoricalDate(birthRaw);
             if (!parsedBirth || parsedBirth.date > new Date()) return null;
-
             let parsedDeath = null;
             const status = computeStatus(deathRaw);
             if (status === "Deceased") {
                 parsedDeath = parseHistoricalDate(deathRaw);
                 if (!parsedDeath || parsedDeath.date < parsedBirth.date || parsedDeath.date > new Date()) return null;
             }
-
             return {
                 birthDateObj: parsedBirth.date,
                 birthIsMonthOnly: parsedBirth.isMonthOnly,
@@ -346,7 +321,6 @@
                 status
             };
         }
-
         function updateSubmitButtonState() {
             const btn = document.getElementById('submit-btn');
             const valid = !!getFormValidation();
@@ -354,42 +328,67 @@
             btn.className = valid ? submitBtnEnabledClass : submitBtnDisabledClass;
         }
 
-        document.getElementById('form-birth-date').addEventListener('input', function() {
-            const preview = document.getElementById('birth-preview');
-            if (!this.value.trim()) {
-                preview.innerText = "";
+        function updateFormValidations() {
+            const birthPreview = document.getElementById('birth-preview');
+            const deathPreview = document.getElementById('death-preview');
+            const birthRaw = document.getElementById('form-birth-date').value.trim();
+            const deathRaw = document.getElementById('form-death-date').value.trim();
+
+            // --- BIRTH DATE VALIDATION ---
+            if (!birthRaw) {
+                birthPreview.innerText = "";
             } else {
-                const p = parseHistoricalDate(this.value);
-                if (!p) {
-                    preview.innerText = "Invalid date format";
-                    preview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                const pBirth = parseHistoricalDate(birthRaw);
+                const pDeath = (computeStatus(deathRaw) === "Deceased") ? parseHistoricalDate(deathRaw) : null;
+
+                if (!pBirth) {
+                    birthPreview.innerText = "Invalid Date Format";
+                    birthPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                } else if (pBirth.date > new Date()) {
+                    birthPreview.innerText = "Invalid Entry";
+                    birthPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                } else if (pDeath && pBirth.date > pDeath.date) {
+                    birthPreview.innerText = "After Death Date";
+                    birthPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
                 } else {
-                    preview.innerText = "Parsed: " + formatSheetDate(p.date, p.isMonthOnly);
-                    preview.className = "text-[11px] text-cyan-400 font-mono italic h-4";
+                    birthPreview.innerText = "";
                 }
             }
+
+            // --- DEATH DATE VALIDATION ---
+            if (!deathRaw) {
+                deathPreview.innerText = "Alive";
+                deathPreview.className = "text-[11px] text-emerald-400 font-mono italic h-4";
+            } else if (deathRaw.toLowerCase() === "unverified") {
+                deathPreview.innerText = "Limbo (fill Last Verified)";
+                deathPreview.className = "text-[11px] text-amber-400 font-mono italic h-4";
+            } else {
+                const pDeath = parseHistoricalDate(deathRaw);
+                const pBirth = parseHistoricalDate(birthRaw);
+
+                if (!pDeath) {
+                    deathPreview.innerText = "Invalid Date Format";
+                    deathPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                } else if (pDeath.date > new Date()) {
+                    deathPreview.innerText = "Future Death Date";
+                    deathPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                } else if (pBirth && pDeath.date < pBirth.date) {
+                    deathPreview.innerText = "Before Birth Date";
+                    deathPreview.className = "text-[11px] text-red-400 font-mono italic h-4";
+                } else {
+                    deathPreview.innerText = "Deceased (" + formatSheetDate(pDeath.date, pDeath.isMonthOnly) + ")";
+                    deathPreview.className = "text-[11px] text-slate-400 font-mono italic h-4";
+                }
+            }
+        }
+
+        document.getElementById('form-birth-date').addEventListener('input', function() {
+            updateFormValidations();
             updateSubmitButtonState();
         });
 
         document.getElementById('form-death-date').addEventListener('input', function() {
-            const preview = document.getElementById('death-preview');
-            const val = this.value.trim();
-            if (!val) {
-                preview.innerText = "Alive";
-                preview.className = "text-[11px] text-emerald-400 font-mono italic h-4";
-            } else if (val.toLowerCase() === "unverified") {
-                preview.innerText = "Limbo (fill Last Verified)";
-                preview.className = "text-[11px] text-amber-400 font-mono italic h-4";
-            } else {
-                const p = parseHistoricalDate(val);
-                if (!p) {
-                    preview.innerText = "Invalid death date";
-                    preview.className = "text-[11px] text-red-400 font-mono italic h-4";
-                } else {
-                    preview.innerText = "Deceased (" + formatSheetDate(p.date, p.isMonthOnly) + ")";
-                    preview.className = "text-[11px] text-slate-400 font-mono italic h-4";
-                }
-            }
+            updateFormValidations();
             updateSubmitButtonState();
         });
 
@@ -399,7 +398,6 @@
             deathInput.dispatchEvent(new Event('input'));
             document.getElementById('form-last-verified').focus();
         });
-
         ['f', 'm'].forEach(code => {
             const val = code.toUpperCase();
             document.getElementById(`gender-${code}`).addEventListener('click', function() {
@@ -411,11 +409,9 @@
                 updateSubmitButtonState();
             });
         });
-
         ['form-first-name', 'form-middle-name', 'form-last-name', 'form-last-verified'].forEach(id => {
             document.getElementById(id).addEventListener('input', updateSubmitButtonState);
         });
-
         function resetFormDefaults() {
             ['form-first-name', 'form-middle-name', 'form-last-name', 'form-birth-date', 'form-death-date', 'form-last-verified'].forEach(id => {
                 document.getElementById(id).value = '';
@@ -427,11 +423,9 @@
             ['f', 'm'].forEach(c => document.getElementById(`gender-${c}`).className = btnInactiveStyle);
             updateSubmitButtonState();
         }
-
         document.getElementById('submit-btn').addEventListener('click', function() {
             const validData = getFormValidation();
             if (!validData) return;
-
             const localKey = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
             peopleDataMap[localKey] = {
                 firstName: document.getElementById('form-first-name').value.trim(),
@@ -449,7 +443,6 @@
             renderTable();
             resetFormDefaults();
         });
-
         document.getElementById('purge-all-btn').addEventListener('click', function() {
             if (confirm("Are you sure you want to purge all entries from the database?")) {
                 peopleDataMap = {};
@@ -457,20 +450,17 @@
                 renderTable();
             }
         });
-
         document.getElementById('search-input').addEventListener('input', function() {
             searchQuery = this.value.trim().toLowerCase();
             document.getElementById('clear-search-btn').classList.toggle('hidden', !searchQuery);
             renderTable();
         });
-
         document.getElementById('clear-search-btn').addEventListener('click', function() {
             document.getElementById('search-input').value = "";
             searchQuery = "";
             this.classList.add('hidden');
             renderTable();
         });
-
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 currentFilter = this.getAttribute('data-filter');
@@ -482,14 +472,11 @@
                 renderTable();
             });
         });
-
         document.getElementById('sort-select').addEventListener('change', function() {
             currentSort = this.value;
             renderTable();
         });
-
         function handleCellFocus(key) { activelyEditingKey = key; }
-
         function handleNameSave(key, el) {
             const raw = el.innerText.trim();
             if (raw && peopleDataMap[key]) {
@@ -502,7 +489,6 @@
             activelyEditingKey = null;
             renderTable();
         }
-
         function handleBirthSave(key, el) {
             const raw = el.innerText.trim();
             const parsed = parseHistoricalDate(raw);
@@ -516,7 +502,6 @@
             activelyEditingKey = null;
             renderTable();
         }
-
         function handleDeathSave(key, el) {
             const raw = el.innerText.trim();
             if (peopleDataMap[key]) {
@@ -547,7 +532,6 @@
             activelyEditingKey = null;
             renderTable();
         }
-
         function handleVerifiedSave(key, el) {
             const raw = el.innerText.trim();
             if (peopleDataMap[key]) {
@@ -557,7 +541,6 @@
             activelyEditingKey = null;
             renderTable();
         }
-
         function toggleDropdownMenu(key, event) {
             event.stopPropagation();
             const menu = document.getElementById(`dropdown-${key}`);
@@ -574,7 +557,6 @@
                 openDropdownKey = key;
             }
         }
-
         function selectGenderOption(key, val) {
             if (peopleDataMap[key]) {
                 peopleDataMap[key].gender = val;
@@ -583,7 +565,6 @@
                 renderTable();
             }
         }
-
         document.addEventListener('click', function(e) {
             if (openDropdownKey) {
                 const prev = document.getElementById(`dropdown-${openDropdownKey}`);
@@ -599,14 +580,12 @@
                 }
             }
         });
-
         function updateBadges() {
             const entries = Object.values(peopleDataMap);
             document.getElementById('live-count-badge').innerText = entries.length;
             document.getElementById('alive-count-badge').innerText = entries.filter(e => e.status === "Alive").length;
             document.getElementById('limbo-count-badge').innerText = entries.filter(e => e.status === "Limbo").length;
         }
-
         function getStatusBadgeHtml(status) {
             if (status === "Alive") {
                 return `<span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/65">Alive</span>`;
@@ -616,7 +595,6 @@
             }
             return `<span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-slate-900 text-slate-400 border border-slate-700">Deceased</span>`;
         }
-
         function renderTable() {
             if (activelyEditingKey || openDropdownKey) return;
             updateBadges();
@@ -634,18 +612,15 @@
             tableWrapper.classList.remove('hidden');
             controlsWrapper.classList.remove('hidden');
             controlsWrapper.classList.add('flex');
-
             let items = allKeys.map(k => {
                 const item = peopleDataMap[k];
                 const fullName = [item.firstName, item.middleName, item.lastName].filter(Boolean).join(" ");
                 const ageInfo = calculateSheetAge(item.birthIso, item.deathIso, item.status);
                 return { localKey: k, ...item, fullName, ageInfo };
             });
-
             if (currentFilter !== "ALL") {
                 items = items.filter(i => i.status === currentFilter);
             }
-
             if (searchQuery) {
                 const queryTerms = searchQuery.split(/\s+/).filter(Boolean);
                 items = items.filter(i => {
@@ -653,14 +628,12 @@
                     return queryTerms.every(term => searchableText.includes(term));
                 });
             }
-
             items.sort((a, b) => {
                 if (currentSort === "birth-asc") return new Date(a.birthIso) - new Date(b.birthIso);
                 if (currentSort === "birth-desc") return new Date(b.birthIso) - new Date(a.birthIso);
                 if (currentSort === "name-asc") return a.fullName.localeCompare(b.fullName);
                 return 0;
             });
-
             const tableBody = document.getElementById('table-body');
             tableBody.innerHTML = items.map(item => `
                 <tr id="row-${item.localKey}" class="hover:bg-slate-900/60 transition-colors text-xs border-b border-slate-800/80">
@@ -704,18 +677,15 @@
                 </tr>
             `).join('');
         }
-
         // Standard RFC-compliant CSV parser for Google Sheets export
         function parseCSV(csvText) {
             const rows = [];
             let currentRow = [];
             let currentField = '';
             let inQuotes = false;
-
             for (let i = 0; i < csvText.length; i++) {
                 const char = csvText[i];
                 const nextChar = csvText[i + 1];
-
                 if (char === '"') {
                     if (inQuotes && nextChar === '"') {
                         currentField += '"';
@@ -746,63 +716,50 @@
             }
             return rows;
         }
-
         // Fetch live data from the "People's Ages" tab in Google Sheets
         document.getElementById('load-sheet-btn').addEventListener('click', async function() {
             const btn = this;
             const originalText = btn.innerText;
             btn.disabled = true;
             btn.innerText = "Syncing Sheet...";
-
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL, { cache: 'no-store' });
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
-
                 const csvText = await response.text();
                 // Detect if Google redirected to a login HTML page (sheet isn't shared publicly)
                 if (csvText.trim().startsWith('<!DOCTYPE html>') || csvText.includes('accounts.google.com')) {
                     throw new Error("AUTH_REQUIRED");
                 }
-
                 const rows = parseCSV(csvText);
                 let headerIndex = rows.findIndex(r => r[0] && r[0].toUpperCase() === 'NAME');
                 if (headerIndex === -1) headerIndex = 0;
-
                 const dataRows = rows.slice(headerIndex + 1);
                 let importedCount = 0;
-
                 dataRows.forEach((row) => {
                     const fullName = (row[0] || "").trim();
                     const gender = (row[1] || "").trim().toUpperCase();
                     const birthRaw = (row[2] || "").trim();
                     const deathRaw = (row[3] || "").trim();
                     const sheetStatus = (row[5] || "").trim();
-
                     // Skip blank rows or the bottom helper "SEARCH / FIRST NAME / LAST NAME" block
                     if (!fullName || !birthRaw || fullName.toUpperCase() === 'SEARCH') return;
-
                     const pBirth = parseHistoricalDate(birthRaw);
                     if (!pBirth) return;
-
                     // Split full name into first, middle, last
                     const nameParts = fullName.split(/\s+/);
                     const firstName = nameParts[0];
                     const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "";
                     const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
-
                     let status = computeStatus(deathRaw);
                     if (sheetStatus === "Limbo") status = "Limbo";
                     const pDeath = status === "Deceased" ? parseHistoricalDate(deathRaw) : null;
-
                     // Deterministic key prevents duplicates when re-syncing the sheet
                     const slug = `${fullName}_${birthRaw}`.toLowerCase().replace(/[^a-z0-9]+/g, '_');
                     const key = `gsheet_${slug}`;
-
                     // Preserve any manually entered "lastVerified" note if this Limbo entry already existed
                     const existingVerified = peopleDataMap[key] ? peopleDataMap[key].lastVerified : "";
-
                     peopleDataMap[key] = {
                         firstName,
                         middleName,
@@ -817,16 +774,13 @@
                     };
                     importedCount++;
                 });
-
                 saveToLocalStorage();
                 renderTable();
-
                 btn.innerText = `✓ Synced ${importedCount} Entries`;
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.disabled = false;
                 }, 2200);
-
             } catch (err) {
                 console.error("Google Sheet sync error:", err);
                 if (err.message === "AUTH_REQUIRED") {
@@ -838,7 +792,6 @@
                 btn.disabled = false;
             }
         });
-
         // Dynamically sync sticky table header offset with the search/controls bar height
         const controlsEl = document.getElementById('controls-wrapper');
         const syncStickyOffset = () => {
@@ -847,7 +800,6 @@
             }
         };
         new ResizeObserver(syncStickyOffset).observe(controlsEl);
-
         updateSubmitButtonState();
         renderTable();
         setInterval(renderTable, 1000);
