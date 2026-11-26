@@ -3,193 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RBX Timelines</title>
+    <title>Famous People Age Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth collapsing & dropping animation states - attached directly to parent */
+        .dropdown-menu {
+            opacity: 0;
+            transform: scaleY(0);
+            transform-origin: top;
+            pointer-events: none;
+            transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dropdown-menu.open {
+            opacity: 1;
+            transform: scaleY(1);
+            pointer-events: auto;
+        }
+        /* Custom highlight styling for active editing fields */
+        .editable-cell:focus {
+            background-color: rgba(2, 6, 23, 0.9);
+            outline: 2px solid #0891b2;
+            border-radius: 4px;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
+<body class="bg-[#05070c] text-slate-300 min-h-screen antialiased selection:bg-cyan-600 selection:text-slate-200 font-mono">
 
-    <div class="max-w-7xl mx-auto p-8 text-gray-100 relative">
+    <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 text-slate-300 relative">
         
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center space-x-4">
-                <svg class="rounded-xl shadow-md border border-gray-700 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800" width="56" height="56" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-dasharray="4 6"/>
-                    <path d="M 25,25 Q 45,75 75,75" fill="none" stroke="#67e8f9" stroke-width="4" stroke-linecap="round"/>
-                    <rect x="42" y="34" width="24" height="24" rx="4" fill="#ffffff" transform="rotate(18 54 46)" opacity="0.95"/>
-                    <rect x="50" y="42" width="8" height="8" fill="#1e1b4b" transform="rotate(18 54 46)"/>
-                </svg>
+                <img class="rounded-xl shadow-md border border-slate-800 object-cover shrink-0" width="56" height="56" src="https://pbs.twimg.com/media/DU-iN9dX4AAPLPA.jpg" alt="BTAS Logo">
                 <div>
-                    <h1 class="text-3xl font-bold text-white tracking-tight">RBX Timelines</h1>
-                    <p class="text-gray-400 text-sm">Real-time multiplayer account tracking matrix.</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-200 tracking-tight font-mono">BTAS Character Age Tracker</h1>
+                    <p class="text-slate-400 text-xs sm:text-sm font-mono tracking-wide">TRACK THE CURRENT AGES OF YOUR FAVOURITE BTAS CHARACTERS!</p>
                 </div>
             </div>
-            <div class="bg-gray-800 border border-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2 text-xs font-mono">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-gray-400">Max Trackable ID:</span>
-                <span id="live-id-badge" class="text-emerald-400 font-bold">Fetching...</span>
+            <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2 text-xs font-mono w-full sm:w-auto justify-center sm:justify-start shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-cyan-600 animate-pulse"></span>
+                <span class="text-slate-400">Entries:</span>
+                <span id="live-count-badge" class="text-slate-300 font-bold">0</span>
             </div>
         </div>
 
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700 mb-8">
-            <h2 class="text-xl font-bold text-white mb-4">Add Account</h2>
+        <div class="bg-slate-900/90 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-800 mb-8">
+            <h2 class="text-lg sm:text-xl font-bold text-slate-200 mb-6 tracking-wide font-mono border-b border-slate-800 pb-2 text-slate-300">Add Entry</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Username</label>
-                        <input type="text" id="form-account" placeholder="e.g. RobloxPlayer1" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+            <div class="space-y-6">
+                <div class="flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-row gap-4 items-end">
+                    <div class="w-full lg:flex-1">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">First Name</label>
+                        <input type="text" id="form-first-name" placeholder="Felix" class="w-full h-11 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-sm focus:outline-none focus:border-cyan-600/80 focus:ring-1 focus:ring-cyan-600/30 font-mono">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Display Name</label>
-                        <input type="text" id="form-display" placeholder="e.g. JustAUser" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+
+                    <div class="w-full lg:flex-1">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">Middle Name(s) <span class="text-slate-500 font-normal lowercase">(optional)</span></label>
+                        <input type="text" id="form-middle-name" placeholder="Allen" class="w-full h-11 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-sm focus:outline-none focus:border-cyan-600/80 focus:ring-1 focus:ring-cyan-600/30 font-mono">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Account ID</label>
-                        <input type="text" id="form-id" oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="e.g. 1039222732" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
+
+                    <div class="w-full lg:flex-1">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">Last Name</label>
+                        <input type="text" id="form-last-name" placeholder="Harris" class="w-full h-11 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-sm focus:outline-none focus:border-cyan-600/80 focus:ring-1 focus:ring-cyan-600/30 font-mono">
+                    </div>
+
+                    <div class="w-full lg:w-[15%] shrink-0">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider font-mono">Gender</label>
+                        <div class="flex items-center space-x-1 bg-slate-950/60 p-1 rounded h-11 border border-slate-800">
+                            <button type="button" id="gender-f" class="flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">F</button>
+                            <button type="button" id="gender-m" class="flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">M</button>
+                            <button type="button" id="gender-nb" class="flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">N/A</button>
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Date Selection</h3>
-                    <input type="text" id="form-date" placeholder="e.g. August 13, 2022 or 8/13/2022" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500">
-                </div>
-
-                <div class="space-y-2 lg:col-span-2">
-                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Time Selection</h3>
-                    
-                    <div class="flex items-end justify-center space-x-2 bg-gray-900 p-2 rounded-lg border border-gray-700 h-[64px] max-w-[260px] mx-auto lg:mx-0">
+                <div class="flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-6 pt-2">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 flex-1 w-full">
                         
-                        <div class="flex flex-col items-center">
-                            <span class="text-[9px] text-gray-500 font-semibold uppercase mb-0.5 select-none tracking-tight">hrs</span>
-                            <input type="text" id="input-hour" value="12" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
-                        </div>
-                        <span class="text-gray-600 font-bold select-none pb-1.5">:</span>
-
-                        <div class="flex flex-col items-center">
-                            <span class="text-[9px] text-gray-500 font-semibold uppercase mb-0.5 select-none tracking-tight">min</span>
-                            <input type="text" id="input-minute" value="00" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
-                        </div>
-                        <span class="text-gray-600 font-bold select-none pb-1.5">:</span>
-
-                        <div class="flex flex-col items-center">
-                            <span class="text-[9px] text-gray-500 font-semibold uppercase mb-0.5 select-none tracking-tight">sec</span>
-                            <input type="text" id="input-second" value="00" maxlength="2" class="w-10 bg-gray-800 border border-gray-700 rounded text-center text-sm font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500 p-1">
+                        <div class="space-y-1.5 w-full lg:w-[39.56%]">
+                            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">date of birth</label>
+                            <input type="text" id="form-birth-date" placeholder="e.g., &quot;July 6, 2026&quot;, &quot;6th of July, 2026&quot;" class="w-full h-10 bg-slate-950/60 border border-slate-800 rounded p-2.5 text-slate-200 text-[11px] sm:text-xs focus:outline-none focus:border-cyan-600 font-mono">
+                            <p id="date-preview" class="text-[11px] text-red-400 font-mono italic h-4 min-h-4"></p>
                         </div>
 
-                        <div class="flex items-center space-x-1 pl-2 border-l border-gray-700 h-[34px] mb-0.5">
-                            <button type="button" id="ampm-am" class="px-2 py-1 text-[10px] font-bold rounded bg-blue-600 text-white transition-colors duration-150">AM</button>
-                            <button type="button" id="ampm-pm" class="px-2 py-1 text-[10px] font-bold rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors duration-150">PM</button>
+                        <div class="space-y-1.5 w-full lg:w-[22.5%] text-center">
+                            <h3 class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono w-full text-center">Birth Time <span class="text-slate-500 font-normal lowercase">(optional)</span></h3>
+                            <div class="flex items-center justify-center space-x-2 bg-slate-950/60 px-3 py-1 rounded border border-slate-800 h-10 w-full mx-auto">
+                                <div class="flex items-center space-x-1 justify-center">
+                                    <input type="text" id="input-hour" value="--" maxlength="2" class="w-8 bg-slate-900 border border-slate-800 rounded text-center text-xs font-mono font-bold text-slate-300 focus:outline-none focus:border-cyan-600 p-0.5">
+                                    <span class="text-slate-700 font-bold select-none pb-0.5 text-xs font-mono">:</span>
+                                    <input type="text" id="input-minute" value="--" maxlength="2" class="w-8 bg-slate-900 border border-slate-800 rounded text-center text-xs font-mono font-bold text-slate-300 focus:outline-none focus:border-cyan-600 p-0.5">
+                                </div>
+                                
+                                <div class="flex items-center space-x-1 pl-2 border-l border-slate-800 h-full py-1 justify-center">
+                                    <button type="button" id="ampm-am" class="px-2 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">AM</button>
+                                    <button type="button" id="ampm-pm" class="px-2 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono">PM</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                    <button type="button" id="submit-btn" disabled class="w-full md:w-64 bg-gray-700 text-gray-500 font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-none cursor-not-allowed">Save Entry</button>
+                    <div class="pb-0.5 w-full lg:w-auto">
+                        <button type="button" id="submit-btn" disabled class="w-full lg:w-48 bg-slate-800 text-slate-600 font-semibold py-2px px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-sm h-10 font-mono tracking-wider">Confirm</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="table-wrapper" class="overflow-x-auto bg-gray-800 rounded-lg shadow-xl border border-gray-700 hidden">
-            <table class="min-w-full divide-y divide-gray-700 text-left text-sm">
-                <thead class="bg-gray-800 text-gray-300 uppercase text-xs font-semibold tracking-wider">
-                    <tr>
-                        <th class="px-6 py-4">Username</th>
-                        <th class="px-6 py-4">Display Name</th>
-                        <th class="px-6 py-4">Join Date</th>
-                        <th class="px-6 py-4">Account Age</th>
-                        <th class="px-6 py-4">Account ID</th>
-                        <th class="px-6 py-4 text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body" class="divide-y divide-gray-700 bg-gray-900/50"></tbody>
-            </table>
+        <div id="table-wrapper" class="bg-slate-900 rounded-lg shadow-xl border border-slate-800 hidden overflow-visible">
+            <div class="min-w-full align-middle overflow-visible">
+                <table class="min-w-full divide-y divide-slate-800 text-left text-sm table-fixed overflow-visible font-mono">
+                    <thead class="bg-slate-950/60 text-slate-400 uppercase text-[10px] sm:text-xs font-semibold tracking-wider font-mono">
+                        <tr>
+                            <th class="w-1/4 px-4 sm:px-6 py-4 font-mono">Name</th>
+                            <th class="w-[12%] px-4 sm:px-6 py-4 text-center font-mono">Gender</th>
+                            <th class="w-1/4 px-4 sm:px-6 py-4 font-mono">Date of Birth</th>
+                            <th class="w-1/4 px-4 sm:px-6 py-4 font-mono">Age</th>
+                            <th class="w-[15%] px-4 sm:px-6 py-4 text-center font-mono">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-800 bg-slate-950/20 overflow-visible font-mono"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        let accountDataMap = JSON.parse(localStorage.getItem('rbx_timeline_data')) || {};
-        let maxTrackableId = 8200000000; 
-        let activeAmPm = "AM";
-        let isEditingTableCell = false;
+        let ageMatrixDataMap = JSON.parse(localStorage.getItem('age_matrix_gender_data')) || {};
+        let activeAmPm = ""; 
+        let activeGender = ""; 
+        let openDropdownKey = null;
+        let activelyEditingKey = null; 
 
-        const MIN_TRACKABLE_ID = 16;
-        const MIN_JOIN_DATE = new Date(2005, 4, 22);
+        const MIN_BIRTH_DATE = new Date(1900, 0, 1);
 
-        const submitBtnEnabledClass = "w-full md:w-64 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-md cursor-pointer";
-        const submitBtnDisabledClass = "w-full md:w-64 bg-gray-700 text-gray-500 font-semibold py-2.5 px-4 rounded transition-colors duration-150 shadow-none cursor-not-allowed";
+        const submitBtnEnabledClass = "w-full lg:w-48 bg-cyan-800 hover:bg-cyan-700 text-slate-200 font-semibold py-2 px-4 rounded transition-colors duration-75 ease-out shadow-sm cursor-pointer text-sm h-10 font-mono tracking-wider";
+        const submitBtnDisabledClass = "w-full lg:w-48 bg-slate-800 text-slate-600 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-sm h-10 font-mono tracking-wider";
 
-        function saveToLocalStorage() { localStorage.setItem('rbx_timeline_data', JSON.stringify(accountDataMap)); }
+        const btnActiveStyle = "flex-1 h-full text-[10px] font-bold rounded bg-cyan-800 text-slate-200 transition-colors duration-75 ease-out shadow-sm font-mono";
+        const btnInactiveStyle = "flex-1 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono";
 
-        function getMaxJoinDate() {
-            return new Date();
+        const ampmActiveStyle = "px-2 h-full text-[10px] font-bold rounded bg-cyan-800 text-slate-200 transition-colors duration-75 ease-out shadow-sm font-mono";
+        const ampmInactiveStyle = "px-2 h-full text-[10px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors duration-75 ease-out font-mono";
+
+        const genderStyles = {
+            'F': { text: 'text-slate-300', border: 'border-slate-800', bg: 'bg-slate-950/60', hover: 'hover:bg-slate-800' },
+            'M': { text: 'text-slate-300', border: 'border-slate-800', bg: 'bg-slate-950/60', hover: 'hover:bg-slate-800' },
+            'N/A': { text: 'text-slate-300', border: 'border-slate-800', bg: 'bg-slate-950/60', hover: 'hover:bg-slate-800' }
+        };
+
+        const monthTypos = {
+            'january': 'january', 'jan': 'january', 'januery': 'january',
+            'february': 'february', 'feb': 'february', 'febuary': 'february', 'febrary': 'february',
+            'march': 'march', 'mar': 'march',
+            'april': 'april', 'apr': 'april',
+            'may': 'may',
+            'june': 'june', 'jun': 'june',
+            'july': 'july', 'jul': 'july',
+            'august': 'august', 'aug': 'august',
+            'september': 'september', 'sep': 'september', 'sept': 'september',
+            'october': 'october', 'oct': 'october',
+            'november': 'november', 'nov': 'november',
+            'december': 'december', 'dec': 'december'
+        };
+
+        function saveToLocalStorage() { localStorage.setItem('age_matrix_gender_data', JSON.stringify(ageMatrixDataMap)); }
+
+        function isValidBirthDate(date) { return date >= MIN_BIRTH_DATE && date <= new Date(); }
+
+        function parseCleanedTextDate(rawText) {
+            let str = rawText.trim().toLowerCase();
+            if (!str) return null;
+
+            Object.keys(monthTypos).forEach(typo => {
+                const regex = new RegExp(`\\b${typo}\\b`, 'g');
+                if (regex.test(str)) {
+                    str = str.replace(regex, monthTypos[typo]);
+                }
+            });
+
+            str = str.replace(/(\b\d+)(st|nd|rd|th)\b/g, '$1');
+            str = str.replace(/\bof\b/g, ' ');
+
+            const parsedTimestamp = Date.parse(str);
+            if (isNaN(parsedTimestamp)) return null;
+
+            const targetDate = new Date(parsedTimestamp);
+            return isValidBirthDate(targetDate) ? targetDate : null;
         }
 
-        function isValidJoinDate(date) {
-            return date && !isNaN(date.getTime()) && date >= MIN_JOIN_DATE && date <= getMaxJoinDate();
-        }
+        function getFormDateTimeData() {
+            const rawTextDate = document.getElementById('form-birth-date').value;
+            const validDateObj = parseCleanedTextDate(rawTextDate);
 
-        function isValidAccountId(id) {
-            return id >= MIN_TRACKABLE_ID && id <= maxTrackableId;
-        }
+            if (!validDateObj) return null;
 
-        function parseAndFixDateString(str) {
-            if (!str) return { formattedStr: "", parsedDate: null };
-
-            let cleanStr = str.trim();
-
-            // Automatically add missing comma before 4-digit year when written out (e.g., "August 13 2022" -> "August 13, 2022")
-            cleanStr = cleanStr.replace(/([a-zA-Z]+\s+\d{1,2}(?:st|nd|rd|th)?)\s+(\d{4})/i, '$1, $2');
-
-            // Strip ordinal suffixes (e.g., "13th" -> "13") for reliable JS Date parsing
-            const parseableStr = cleanStr.replace(/(\d{1,2})(st|nd|rd|th)/i, '$1');
-
-            const parsedDate = new Date(parseableStr);
-
-            return {
-                formattedStr: cleanStr,
-                parsedDate: isNaN(parsedDate.getTime()) ? null : parsedDate
-            };
-        }
-
-        function getFormDateTime() {
-            const dateInputVal = document.getElementById('form-date').value;
             const hRaw = document.getElementById('input-hour').value;
             const mRaw = document.getElementById('input-minute').value;
-            const sRaw = document.getElementById('input-second').value;
-
-            if (!dateInputVal || hRaw === '--' || mRaw === '--' || sRaw === '--') {
-                return null;
-            }
-
-            const { parsedDate } = parseAndFixDateString(dateInputVal);
-            if (!parsedDate) return null;
 
             let h = parseInt(hRaw, 10);
             let m = parseInt(mRaw, 10);
-            let s = parseInt(sRaw, 10);
+            let hasTime = true;
 
-            if (isNaN(h) || isNaN(m) || isNaN(s)) return null;
-            if (h < 1 || h > 12 || m < 0 || m > 59 || s < 0 || s > 59) return null;
+            if (isNaN(h) || hRaw === '--' || isNaN(m) || mRaw === '--' || !activeAmPm) {
+                h = 0; 
+                m = 0;
+                hasTime = false;
+            } else {
+                if (activeAmPm === "PM" && h < 12) h += 12;
+                if (activeAmPm === "AM" && h === 12) h = 0;
+            }
 
-            if (activeAmPm === "PM" && h < 12) h += 12;
-            if (activeAmPm === "AM" && h === 12) h = 0;
+            const year = validDateObj.getFullYear();
+            const month = String(validDateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(validDateObj.getDate()).padStart(2, '0');
 
-            const finalDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), h, m, s);
-            return isNaN(finalDate.getTime()) ? null : finalDate;
+            const combinedDateTimeString = `${year}-${month}-${day}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+            const finalComputedDate = new Date(combinedDateTimeString);
+            
+            if (isNaN(finalComputedDate.getTime()) || finalComputedDate > new Date()) return null;
+            
+            return { chosenDate: finalComputedDate, hasTime, combinedDateTimeString, originalTypedFormat: rawTextDate };
         }
 
         function isFormValid() {
-            const account = document.getElementById('form-account').value.trim();
-            const display = document.getElementById('form-display').value.trim();
-            const idStr = document.getElementById('form-id').value.trim();
+            const firstName = document.getElementById('form-first-name').value.trim();
+            const lastName = document.getElementById('form-last-name').value.trim();
 
-            if (!account || !display || !idStr) return false;
+            if (!firstName || !lastName || !activeGender) return false;
 
-            const inputIdParsed = parseInt(idStr, 10);
-            if (!isValidAccountId(inputIdParsed)) return false;
-
-            const chosenDate = getFormDateTime();
-            if (!chosenDate || !isValidJoinDate(chosenDate)) return false;
+            const timeData = getFormDateTimeData();
+            if (!timeData) return false;
 
             return true;
         }
@@ -201,13 +246,40 @@
             btn.className = valid ? submitBtnEnabledClass : submitBtnDisabledClass;
         }
 
+        function autoFixMissingYearComma(element) {
+            let val = element.value;
+            const regex = /([^,]\s)(\b\d{4}\b)/g;
+            if (regex.test(val)) {
+                const selectionStart = element.selectionStart;
+                element.value = val.replace(regex, (match, p1, p2) => p1.trim() + ', ' + p2);
+                element.setSelectionRange(selectionStart + 1, selectionStart + 1);
+            }
+        }
+
+        function checkDateOnBlur() {
+            const previewEl = document.getElementById('date-preview');
+            autoFixMissingYearComma(document.getElementById('form-birth-date'));
+            const rawTextDate = document.getElementById('form-birth-date').value;
+            
+            if (!rawTextDate.trim()) {
+                previewEl.innerText = "";
+                return;
+            }
+
+            const parsed = parseCleanedTextDate(rawTextDate);
+            if (!parsed) {
+                previewEl.innerText = "Invalid date";
+                previewEl.className = "text-[11px] text-red-400 font-semibold font-mono h-4 min-h-4";
+            } else {
+                previewEl.innerText = "";
+            }
+        }
+
         function bindTimeValidations(inputId, limit) {
             const element = document.getElementById(inputId);
             
             element.addEventListener('focus', function() {
-                if (this.value === '--') {
-                    this.value = '';
-                }
+                if (this.value === '--') this.value = '';
             });
 
             element.addEventListener('input', function() {
@@ -217,7 +289,7 @@
 
             element.addEventListener('blur', function() {
                 let currentNum = parseInt(this.value, 10);
-                if (this.value.trim() === '' || isNaN(currentNum) || currentNum > limit) {
+                if (this.value.trim() === '' || isNaN(currentNum) || currentNum > limit || currentNum < (inputId === 'input-hour' ? 1 : 0)) {
                     this.value = "--";
                 } else {
                     this.value = String(currentNum).padStart(2, '0');
@@ -228,184 +300,411 @@
 
         bindTimeValidations('input-hour', 12);
         bindTimeValidations('input-minute', 59);
-        bindTimeValidations('input-second', 59);
 
-        document.getElementById('form-date').addEventListener('input', updateSubmitButtonState);
-        document.getElementById('form-date').addEventListener('blur', function() {
-            const { formattedStr } = parseAndFixDateString(this.value);
-            this.value = formattedStr;
-            updateSubmitButtonState();
-        });
+        function setDefaultTimeToDash() {
+            document.getElementById('input-hour').value = '--';
+            document.getElementById('input-minute').value = '--';
+            activeAmPm = "";
+            document.getElementById('ampm-am').className = ampmInactiveStyle;
+            document.getElementById('ampm-pm').className = ampmInactiveStyle;
+        }
 
-        function setDefaultTimeToMidnight() {
-            document.getElementById('input-hour').value = '12';
-            document.getElementById('input-minute').value = '00';
-            document.getElementById('input-second').value = '00';
-            activeAmPm = "AM";
-            document.getElementById('ampm-am').className = "px-2 py-1 text-[10px] font-bold rounded bg-blue-600 text-white transition-colors duration-150";
-            document.getElementById('ampm-pm').className = "px-2 py-1 text-[10px] font-bold rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors duration-150";
+        function resetGenderToggle() {
+            activeGender = "";
+            document.getElementById('gender-f').className = btnInactiveStyle;
+            document.getElementById('gender-m').className = btnInactiveStyle;
+            document.getElementById('gender-nb').className = btnInactiveStyle;
         }
 
         function resetFormDefaults() {
-            document.getElementById('form-account').value = '';
-            document.getElementById('form-display').value = '';
-            document.getElementById('form-id').value = '';
-            document.getElementById('form-date').value = '';
-            setDefaultTimeToMidnight();
+            document.getElementById('form-first-name').value = '';
+            document.getElementById('form-middle-name').value = '';
+            document.getElementById('form-last-name').value = '';
+            document.getElementById('form-birth-date').value = '';
+            document.getElementById('date-preview').innerText = '';
+            resetGenderToggle();
+            setDefaultTimeToDash();
             updateSubmitButtonState();
         }
 
-        ['form-account', 'form-display', 'form-id'].forEach(function(id) {
-            document.getElementById(id).addEventListener('input', updateSubmitButtonState);
+        document.getElementById('form-birth-date').addEventListener('input', function() {
+            if (this.value.length > 0) {
+                this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
+            }
+            autoFixMissingYearComma(this);
+            document.getElementById('date-preview').innerText = "";
+            updateSubmitButtonState();
+        });
+
+        document.getElementById('form-birth-date').addEventListener('blur', checkDateOnBlur);
+
+        document.getElementById('gender-f').addEventListener('click', function() {
+            if (activeGender === "F") {
+                activeGender = "";
+                this.className = btnInactiveStyle;
+            } else {
+                activeGender = "F";
+                this.className = btnActiveStyle;
+                document.getElementById('gender-m').className = btnInactiveStyle;
+                document.getElementById('gender-nb').className = btnInactiveStyle;
+            }
+            updateSubmitButtonState();
+        });
+
+        document.getElementById('gender-m').addEventListener('click', function() {
+            if (activeGender === "M") {
+                activeGender = "";
+                this.className = btnInactiveStyle;
+            } else {
+                activeGender = "M";
+                this.className = btnActiveStyle;
+                document.getElementById('gender-f').className = btnInactiveStyle;
+                document.getElementById('gender-nb').className = btnInactiveStyle;
+            }
+            updateSubmitButtonState();
+        });
+
+        document.getElementById('gender-nb').addEventListener('click', function() {
+            if (activeGender === "N/A") {
+                activeGender = "";
+                this.className = btnInactiveStyle;
+            } else {
+                activeGender = "N/A";
+                this.className = btnActiveStyle;
+                document.getElementById('gender-f').className = btnInactiveStyle;
+                document.getElementById('gender-m').className = btnInactiveStyle;
+            }
+            updateSubmitButtonState();
+        });
+
+        ['form-first-name', 'form-middle-name', 'form-last-name'].forEach(function(id) {
+            document.getElementById(id).addEventListener('input', function() {
+                if (this.value.length > 0) {
+                    this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
+                }
+                updateSubmitButtonState();
+            });
         });
 
         document.getElementById('ampm-am').addEventListener('click', function() {
-            activeAmPm = "AM";
-            this.className = "px-2 py-1 text-[10px] font-bold rounded bg-blue-600 text-white transition-colors duration-150";
-            document.getElementById('ampm-pm').className = "px-2 py-1 text-[10px] font-bold rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors duration-150";
-            updateSubmitButtonState();
-        });
-        document.getElementById('ampm-pm').addEventListener('click', function() {
-            activeAmPm = "PM";
-            this.className = "px-2 py-1 text-[10px] font-bold rounded bg-blue-600 text-white transition-colors duration-150";
-            document.getElementById('ampm-am').className = "px-2 py-1 text-[10px] font-bold rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors duration-150";
+            if (activeAmPm === "AM") {
+                activeAmPm = "";
+                this.className = ampmInactiveStyle;
+            } else {
+                activeAmPm = "AM";
+                this.className = ampmActiveStyle;
+                document.getElementById('ampm-pm').className = ampmInactiveStyle;
+            }
             updateSubmitButtonState();
         });
 
-        function updateEstimatedMaxId() {
-            const standardBaselineDate = new Date("2024-01-01").getTime();
-            const dynamicIdDelta = Math.floor((Date.now() - standardBaselineDate) * 35 / 1000);
-            maxTrackableId = 7500000000 + dynamicIdDelta;
-            document.getElementById('live-id-badge').innerText = maxTrackableId.toLocaleString();
+        document.getElementById('ampm-pm').addEventListener('click', function() {
+            if (activeAmPm === "PM") {
+                activeAmPm = "";
+                this.className = ampmInactiveStyle;
+            } else {
+                activeAmPm = "PM";
+                this.className = ampmActiveStyle;
+                document.getElementById('ampm-am').className = ampmInactiveStyle;
+            }
             updateSubmitButtonState();
+        });
+
+        function updateMetricBadge() {
+            const totalRows = Object.keys(ageMatrixDataMap).length;
+            document.getElementById('live-count-badge').innerText = totalRows;
         }
 
-        function calculateAge(joinDateString) {
-            const joinDate = new Date(joinDateString);
+        function calculatePrecisionAge(birthDateString, hasTime) {
+            const birthDate = new Date(birthDateString);
             const now = new Date();
-            let years = now.getFullYear() - joinDate.getFullYear();
-            let months = now.getMonth() - joinDate.getMonth();
-            let days = now.getDate() - joinDate.getDate();
-            let hours = now.getHours() - joinDate.getHours();
-            let minutes = now.getMinutes() - joinDate.getMinutes();
-            let seconds = now.getSeconds() - joinDate.getSeconds();
+            
+            if (birthDate > now) return "Not born yet";
 
-            if (seconds < 0) { minutes--; seconds += 60; }
+            let years = now.getFullYear() - birthDate.getFullYear();
+            let months = now.getMonth() - birthDate.getMonth();
+            let days = now.getDate() - birthDate.getDate();
+            let hours = now.getHours() - birthDate.getHours();
+            let minutes = now.getMinutes() - birthDate.getMinutes();
+
             if (minutes < 0) { hours--; minutes += 60; }
             if (hours < 0) { days--; hours += 24; }
             if (days < 0) { months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
             if (months < 0) { years--; months += 12; }
 
-            const segments = [];
-            if (years > 0) segments.push(`${years} yr${years > 1 ? 's' : ''}`);
-            if (months > 0) segments.push(`${months} mo`);
-            if (days > 0) segments.push(`${days} d`);
-            if (hours > 0) segments.push(`${hours} h`);
-            if (minutes > 0) segments.push(`${minutes} m`);
-            if (seconds > 0) segments.push(`${seconds} s`);
+            let weeks = Math.floor(days / 7);
+            let leftoverDays = days % 7;
 
-            return segments.length === 0 ? "Just joined" : segments.join(', ');
+            const segments = [];
+            if (years > 0) segments.push(`${years} y`);
+            if (months > 0) segments.push(`${months} m`);
+            if (weeks > 0) segments.push(`${weeks} w`);
+            if (leftoverDays > 0) segments.push(`${leftoverDays} d`);
+            
+            if (hasTime) {
+                if (hours > 0) segments.push(`${hours} h`);
+                if (minutes > 0) segments.push(`${minutes} ${minutes === 1 ? 'min' : 'mins'}`);
+            }
+
+            return segments.length === 0 ? "Just born" : segments.join(', ');
         }
+
+        function toggleDropdownMenu(key, event) {
+            event.stopPropagation();
+            const matchingMenu = document.getElementById(`dropdown-${key}`);
+            const triggerBtn = event.currentTarget;
+            if (!matchingMenu) return;
+
+            if (openDropdownKey === key) {
+                matchingMenu.classList.remove('open');
+                triggerBtn.classList.remove('rounded-t');
+                triggerBtn.classList.add('rounded');
+                openDropdownKey = null;
+            } else {
+                if (openDropdownKey) {
+                    const activeMenu = document.getElementById(`dropdown-${openDropdownKey}`);
+                    const activeRow = activeMenu?.closest('tr');
+                    const activeTrigger = activeRow?.querySelector('.gender-trigger');
+                    if (activeMenu) activeMenu.classList.remove('open');
+                    if (activeTrigger) {
+                        activeTrigger.classList.remove('rounded-t');
+                        activeTrigger.classList.add('rounded');
+                    }
+                }
+                matchingMenu.classList.add('open');
+                triggerBtn.classList.remove('rounded');
+                triggerBtn.classList.add('rounded-t');
+                openDropdownKey = key;
+            }
+        }
+
+        function selectGenderOption(key, chosenValue) {
+            if (ageMatrixDataMap[key]) {
+                ageMatrixDataMap[key].gender = chosenValue;
+                saveToLocalStorage();
+                openDropdownKey = null; 
+                renderTable();
+            }
+        }
+
+        function handleCellFocus(key) {
+            activelyEditingKey = key; 
+        }
+
+        function handleNameSave(key, element) {
+            const rawText = element.innerText.trim();
+            if (!rawText) {
+                renderTable();
+                activelyEditingKey = null;
+                return;
+            }
+
+            const segments = rawText.split(/\s+/);
+            if (segments.length === 1) {
+                ageMatrixDataMap[key].firstName = segments[0];
+                ageMatrixDataMap[key].middleName = "";
+                ageMatrixDataMap[key].lastName = "";
+            } else if (segments.length === 2) {
+                ageMatrixDataMap[key].firstName = segments[0];
+                ageMatrixDataMap[key].middleName = "";
+                ageMatrixDataMap[key].lastName = segments[1];
+            } else {
+                ageMatrixDataMap[key].firstName = segments[0];
+                ageMatrixDataMap[key].lastName = segments[segments.length - 1];
+                ageMatrixDataMap[key].middleName = segments.slice(1, segments.length - 1).join(" ");
+            }
+
+            saveToLocalStorage();
+            activelyEditingKey = null;
+            renderTable(); 
+        }
+
+        function handleDobSave(key, element) {
+            const fullRawText = element.innerText.trim();
+            if (!fullRawText) {
+                renderTable();
+                activelyEditingKey = null;
+                return;
+            }
+
+            let textDatePart = fullRawText;
+            let timePart = "";
+            if (fullRawText.includes("|")) {
+                const pieces = fullRawText.split("|");
+                textDatePart = pieces[0].trim();
+                timePart = pieces[1].trim();
+            } else if (fullRawText.includes("(Time")) {
+                const pieces = fullRawText.split("(Time");
+                textDatePart = pieces[0].trim();
+            }
+
+            const parsedDateObj = parseCleanedTextDate(textDatePart);
+            if (!parsedDateObj) {
+                alert("Invalid date entry. Change cancelled.");
+                activelyEditingKey = null;
+                renderTable();
+                return;
+            }
+
+            let hour = 0;
+            let minute = 0;
+            let hasTime = ageMatrixDataMap[key].hasTime;
+
+            if (timePart) {
+                const timeRegex = /(\d+):(\d+)\s*(AM|PM)/i;
+                const match = timePart.match(timeRegex);
+                if (match) {
+                    hour = parseInt(match[1], 10);
+                    minute = parseInt(match[2], 10);
+                    const marker = match[3].toUpperCase();
+                    if (marker === "PM" && hour < 12) hour += 12;
+                    if (marker === "AM" && hour === 12) hour = 0;
+                    hasTime = true;
+                }
+            }
+
+            const year = parsedDateObj.getFullYear();
+            const month = String(parsedDateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(parsedDateObj.getDate()).padStart(2, '0');
+
+            const combinedDateTimeString = `${year}-${month}-${day}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+            
+            ageMatrixDataMap[key].birthDate = combinedDateTimeString;
+            ageMatrixDataMap[key].originalTypedFormat = textDatePart;
+            ageMatrixDataMap[key].hasTime = hasTime;
+
+            saveToLocalStorage();
+            activelyEditingKey = null;
+            renderTable();
+        }
+
+        document.addEventListener('click', function() {
+            if (openDropdownKey) {
+                const activeMenu = document.getElementById(`dropdown-${openDropdownKey}`);
+                const activeRow = activeMenu?.closest('tr');
+                const activeTrigger = activeRow?.querySelector('.gender-trigger');
+                if (activeMenu) activeMenu.classList.remove('open');
+                if (activeTrigger) {
+                    activeTrigger.classList.remove('rounded-t');
+                    activeTrigger.classList.add('rounded');
+                }
+                openDropdownKey = null;
+            }
+        });
 
         function renderTable() {
             const tableWrapper = document.getElementById('table-wrapper');
-            const totalRows = Object.keys(accountDataMap).length;
+            const totalRows = Object.keys(ageMatrixDataMap).length;
 
             if (totalRows === 0) {
                 tableWrapper.classList.add('hidden');
                 return;
             }
 
-            if (isEditingTableCell) return;
-
             tableWrapper.classList.remove('hidden');
             const tableBody = document.getElementById('table-body');
-            tableBody.innerHTML = ''; 
-            const sortedItems = Object.keys(accountDataMap).map(k => ({ localKey: k, ...accountDataMap[k] })).sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
-            const formatter = new Intl.DateTimeFormat(navigator.language || "en-US", { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
+            
+            const sortedItems = Object.keys(ageMatrixDataMap)
+                .map(k => ({ localKey: k, ...ageMatrixDataMap[k] }))
+                .sort((a, b) => new Date(a.birthDate) - new Date(b.birthDate));
+                
             sortedItems.forEach((item) => {
-                tableBody.insertAdjacentHTML('beforeend', `
-                    <tr class="hover:bg-gray-800/50 transition-colors duration-150">
-                        <td data-key="${item.localKey}" data-field="account" contenteditable="true" class="edit-cell px-6 py-4 font-medium text-white focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${item.account}</td>
-                        <td data-key="${item.localKey}" data-field="display" contenteditable="true" class="edit-cell px-6 py-4 text-gray-300 focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${item.display}</td>
-                        <td data-key="${item.localKey}" data-field="joinDate" contenteditable="true" class="edit-cell px-6 py-4 text-gray-400 focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${formatter.format(new Date(item.joinDate))}</td>
-                        <td class="px-6 py-4 text-amber-400 font-mono text-xs select-none">${calculateAge(item.joinDate)}</td>
-                        <td data-key="${item.localKey}" data-field="id" contenteditable="true" class="edit-cell px-6 py-4 text-gray-500 font-mono focus:bg-gray-700/50 focus:outline-none rounded cursor-pointer">${item.id}</td>
-                        <td class="px-6 py-4 text-center select-none">
-                            <button type="button" data-key="${item.localKey}" class="delete-btn text-red-400 hover:text-red-300 font-bold bg-red-500/10 hover:bg-red-500/20 px-2.5 py-1 rounded text-xs">Delete</button>
-                        </td>
-                    </tr>
-                `);
+                if (activelyEditingKey === item.localKey) {
+                    return; 
+                }
+
+                let middleDisplay = '';
+                if (item.middleName && item.middleName.trim() !== '') {
+                    middleDisplay = ' ' + item.middleName.trim();
+                }
+                
+                const fullName = `${item.firstName}${middleDisplay} ${item.lastName}`;
+                
+                let formattedBirthDate = '';
+                const bDateObj = new Date(item.birthDate);
+                const rawDisplayText = item.originalTypedFormat.trim();
+                 
+                if (item.hasTime) {
+                    let rawHours = bDateObj.getHours();
+                    const rawMinutes = String(bDateObj.getMinutes()).padStart(2, '0');
+                    const ampmMarker = rawHours >= 12 ? 'PM' : 'AM';
+                    rawHours = rawHours % 12;
+                    rawHours = rawHours ? rawHours : 12; 
+                    const formattedHours = String(rawHours).padStart(2, '0');
+                    
+                    formattedBirthDate = `${rawDisplayText} | ${formattedHours}:${rawMinutes} ${ampmMarker}`;
+                } else {
+                    formattedBirthDate = `${rawDisplayText} (Time not tracked)`;
+                }
+
+                const ageText = calculatePrecisionAge(item.birthDate, item.hasTime !== false);
+                const currentStyle = genderStyles[item.gender] || genderStyles['N/A'];
+                
+                let existingRow = document.getElementById(`row-${item.localKey}`);
+                
+                if (!existingRow) {
+                    tableBody.insertAdjacentHTML('beforeend', `
+                        <tr id="row-${item.localKey}" class="hover:bg-slate-900/60 transition-colors duration-75 text-xs sm:text-sm border-b border-slate-800 overflow-visible font-mono">
+                            <td contenteditable="true" 
+                                onfocus="handleCellFocus('${item.localKey}')" 
+                                onblur="handleNameSave('${item.localKey}', this)" 
+                                onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }"
+                                class="name-cell editable-cell px-4 sm:px-6 py-4 font-medium text-slate-200 whitespace-normal break-words cursor-edit select-text focus:bg-slate-950 font-mono">${fullName}</td>
+                            <td class="gender-cell px-4 sm:px-6 py-4 text-center select-none overflow-visible relative">
+                                <div class="relative inline-block text-left w-14 mx-auto">
+                                    <button onclick="toggleDropdownMenu('${item.localKey}', event)" class="gender-trigger flex items-center justify-between w-full px-1.5 py-0.5 text-[10px] font-bold border rounded transition-all shadow-sm ${currentStyle.text} ${currentStyle.border} ${currentStyle.bg} ${currentStyle.hover} font-mono">
+                                        <span class="gender-label mx-auto pl-1 font-mono">${item.gender}</span>
+                                        <svg class="w-2 h-2 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div id="dropdown-${item.localKey}" class="dropdown-menu absolute left-0 top-full w-full bg-slate-950 border border-slate-800 border-t-0 rounded-b shadow-xl z-50 overflow-hidden py-0.5">
+                                        <button onclick="selectGenderOption('${item.localKey}', 'F')" class="block w-full text-center px-1 py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-colors font-mono">F</button>
+                                        <button onclick="selectGenderOption('${item.localKey}', 'M')" class="block w-full text-center px-1 py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-colors font-mono">M</button>
+                                        <button onclick="selectGenderOption('${item.localKey}', 'N/A')" class="block w-full text-center px-1 py-0.5 text-[10px] font-bold text-slate-400 hover:bg-slate-800 transition-colors font-mono">N/A</button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td contenteditable="true" 
+                                onfocus="handleCellFocus('${item.localKey}')" 
+                                onblur="handleDobSave('${item.localKey}', this)" 
+                                onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }"
+                                class="dob-cell editable-cell px-4 sm:px-6 py-4 text-slate-400 whitespace-normal break-words cursor-edit select-text focus:bg-slate-950 font-mono">${formattedBirthDate}</td>
+                            <td class="age-cell px-4 sm:px-6 py-4 text-amber-500/80 font-mono select-none whitespace-normal break-words shadow-[inset_0_0_8px_rgba(245,158,11,0.02)]">${ageText}</td>
+                            <td class="px-4 sm:px-6 py-4 text-center select-none whitespace-normal">
+                                <button type="button" data-key="${item.localKey}" class="delete-btn text-red-400 hover:text-red-300 font-bold bg-red-950/40 hover:bg-red-900/40 border border-red-900/30 px-2.5 py-1 rounded text-xs font-mono tracking-wide">Purge</button>
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    existingRow.querySelector('.name-cell').innerText = fullName;
+                    existingRow.querySelector('.dob-cell').innerText = formattedBirthDate;
+                    existingRow.querySelector('.age-cell').innerText = ageText;
+                    
+                    const triggerBtn = existingRow.querySelector('.gender-trigger');
+                    existingRow.querySelector('.gender-label').innerText = item.gender;
+                    
+                    if (openDropdownKey === item.localKey) {
+                        triggerBtn.className = `gender-trigger flex items-center justify-between w-full px-1.5 py-0.5 text-[10px] font-bold border border-b-0 rounded-t transition-all shadow-sm ${currentStyle.text} ${currentStyle.border} ${currentStyle.bg} ${currentStyle.hover} font-mono`;
+                        document.getElementById(`dropdown-${item.localKey}`).classList.add('open');
+                    } else {
+                        triggerBtn.className = `gender-trigger flex items-center justify-between w-full px-1.5 py-0.5 text-[10px] font-bold border rounded transition-all shadow-sm ${currentStyle.text} ${currentStyle.border} ${currentStyle.bg} ${currentStyle.hover} font-mono`;
+                        document.getElementById(`dropdown-${item.localKey}`).classList.remove('open');
+                    }
+                }
+            });
+
+            Array.from(tableBody.children).forEach(row => {
+                const rowId = row.id.replace('row-', '');
+                if (!ageMatrixDataMap[rowId]) row.remove();
             });
         }
-
-        function saveEditCell(cell) {
-            const localKey = cell.getAttribute('data-key');
-            const field = cell.getAttribute('data-field');
-            const newValue = cell.innerText.trim();
-            if (!newValue || !accountDataMap[localKey]) return true;
-
-            if (field === 'id') {
-                const parsedId = parseInt(newValue.replace(/[^0-9]/g, ''), 10);
-                if (!parsedId || parsedId < MIN_TRACKABLE_ID || parsedId > maxTrackableId) {
-                    cell.innerText = accountDataMap[localKey].id;
-                    return false;
-                }
-                accountDataMap[localKey].id = parsedId;
-            } else if (field === 'joinDate') {
-                const { parsedDate } = parseAndFixDateString(newValue);
-                if (!parsedDate || !isValidJoinDate(parsedDate)) {
-                    renderTable();
-                    return false;
-                }
-                accountDataMap[localKey].joinDate = parsedDate.toISOString();
-            } else {
-                accountDataMap[localKey][field] = newValue;
-            }
-            saveToLocalStorage();
-            return true;
-        }
-
-        document.addEventListener('focusin', function(e) {
-            if (e.target && e.target.classList.contains('edit-cell')) {
-                isEditingTableCell = true;
-            }
-        }, true);
-
-        document.addEventListener('focusout', function(e) {
-            if (e.target && e.target.classList.contains('edit-cell')) {
-                setTimeout(function() {
-                    const active = document.activeElement;
-                    if (!active || !active.classList.contains('edit-cell')) {
-                        isEditingTableCell = false;
-                        renderTable();
-                    }
-                }, 0);
-            }
-        }, true);
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.target && e.target.classList.contains('edit-cell')) {
-                e.preventDefault();
-                if (saveEditCell(e.target)) {
-                    e.target.blur();
-                }
-            }
-        }, true);
-
-        document.addEventListener('blur', function(e) {
-            if (e.target && e.target.classList.contains('edit-cell')) {
-                saveEditCell(e.target);
-            }
-        }, true);
 
         document.addEventListener('click', function(e) {
             if(e.target && e.target.classList.contains('delete-btn')) {
                 const localKey = e.target.getAttribute('data-key');
-                if (confirm("Are you sure you want to delete this entry?")) {
-                    delete accountDataMap[localKey];
+                if (confirm("Permanently wipe this entry timeline?")) {
+                    delete ageMatrixDataMap[localKey];
                     saveToLocalStorage();
+                    updateMetricBadge();
                     renderTable();
                 }
             }
@@ -414,29 +713,35 @@
         document.getElementById('submit-btn').addEventListener('click', function() {
             if (this.disabled) return;
 
-            const accountInput = document.getElementById('form-account');
-            const displayInput = document.getElementById('form-display');
-            const idInput = document.getElementById('form-id');
+            const firstNameInput = document.getElementById('form-first-name');
+            const middleNameInput = document.getElementById('form-middle-name');
+            const lastNameInput = document.getElementById('form-last-name');
 
-            const chosenDate = getFormDateTime();
-            const inputIdParsed = parseInt(idInput.value, 10);
-
-            if (!chosenDate || !isValidJoinDate(chosenDate)) return;
-            if (inputIdParsed < MIN_TRACKABLE_ID || inputIdParsed > maxTrackableId) return;
+            const timeData = getFormDateTimeData();
+            if (!timeData) return;
 
             const localKey = 'id_' + Date.now();
-            accountDataMap[localKey] = { account: accountInput.value, display: displayInput.value, joinDate: chosenDate.toISOString(), id: idInput.value };
+            ageMatrixDataMap[localKey] = { 
+                firstName: firstNameInput.value.trim(), 
+                middleName: middleNameInput.value.trim(), 
+                lastName: lastNameInput.value.trim(), 
+                gender: activeGender,
+                birthDate: timeData.combinedDateTimeString,
+                hasTime: timeData.hasTime,
+                originalTypedFormat: timeData.originalTypedFormat
+            };
 
             saveToLocalStorage();
+            updateMetricBadge();
             renderTable();
             resetFormDefaults();
         });
 
-        setDefaultTimeToMidnight();
+        setDefaultTimeToDash();
         updateSubmitButtonState();
-        updateEstimatedMaxId();
+        updateMetricBadge();
         renderTable();
-        setInterval(updateEstimatedMaxId, 2000);
+        
         setInterval(renderTable, 1000);
     </script>
 </body>
