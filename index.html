@@ -6,6 +6,9 @@
     <title>Longevity Database</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        html {
+            scrollbar-gutter: stable;
+        }
         .dropdown-menu {
             opacity: 0;
             transform: scaleY(0);
@@ -69,6 +72,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Add Entry Form -->
         <div class="bg-slate-900/90 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-800 mb-6">
             <h2 class="text-lg font-bold text-slate-200 mb-5 tracking-wide font-mono border-b border-slate-800 pb-2">Add Entry</h2>
@@ -96,6 +100,7 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Row 2: Birth, Death, Status/Limbo, Submit -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-start pt-1">
                     <!-- Birth Date -->
@@ -126,8 +131,9 @@
                 </div>
             </div>
         </div>
-        <!-- Controls: Find in List & Sort Data -->
-        <div class="bg-slate-900/90 p-3 sm:p-4 rounded-lg border border-slate-800 mb-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+
+        <!-- Controls: Find in List & Sort Data (Sticky Top Bar) -->
+        <div id="controls-wrapper" class="sticky top-0 z-30 bg-[#05070c]/95 backdrop-blur-sm p-3 sm:p-4 rounded-b-lg border border-slate-800 mb-4 hidden flex-col md:flex-row justify-between items-stretch md:items-center gap-3 shadow-xl">
             <!-- Find in List -->
             <div class="relative flex-1 max-w-md">
                 <input type="text" id="search-input" placeholder="Find in List (search name, year, status)..." class="w-full h-9 bg-slate-950/80 border border-slate-800 rounded pl-3 pr-8 text-xs text-slate-200 focus:outline-none focus:border-cyan-600 font-mono">
@@ -148,27 +154,29 @@
                 </select>
             </div>
         </div>
+
         <!-- Data Table -->
-        <div id="table-wrapper" class="bg-slate-900 rounded-lg shadow-xl border border-slate-800 hidden overflow-x-auto">
+        <div id="table-wrapper" class="bg-slate-900 rounded-lg shadow-xl border border-slate-800 hidden">
             <table class="min-w-full divide-y divide-slate-800 text-left text-xs sm:text-sm font-mono">
-                <thead class="bg-slate-950/80 text-slate-400 uppercase text-[10px] sm:text-xs font-semibold tracking-wider">
+                <thead id="table-header" style="top: var(--controls-height, 68px);" class="sticky z-20 bg-slate-950 text-slate-400 uppercase text-[10px] sm:text-xs font-semibold tracking-wider shadow-md">
                     <tr>
-                        <th class="w-[24%] px-4 py-3.5 text-center border-r border-slate-800/80">Name</th>
+                        <th class="w-[24%] px-4 py-3.5 text-center border-r border-slate-800/80 rounded-tl-lg">Name</th>
                         <th class="w-[8%] px-2 py-3.5 text-center border-r border-slate-800/80">Gender</th>
                         <th class="w-[15%] px-4 py-3.5 text-center border-r border-slate-800/80">Birth</th>
                         <th class="w-[15%] px-4 py-3.5 text-center border-r border-slate-800/80">Death</th>
                         <th class="w-[15%] px-4 py-3.5 text-center border-r border-slate-800/80">Age</th>
                         <th class="w-[10%] px-3 py-3.5 text-center border-r border-slate-800/80">Status</th>
                         <th class="w-[13%] px-4 py-3.5 text-center border-r border-slate-800/80">If "Limbo", Last Verified</th>
-                        <th class="w-[8%] px-3 py-3.5 text-center">Action</th>
+                        <th class="w-[8%] px-3 py-3.5 text-center rounded-tr-lg">Action</th>
                     </tr>
                 </thead>
                 <tbody id="table-body" class="divide-y divide-slate-800 bg-slate-950/20"></tbody>
             </table>
         </div>
     </div>
+
     <script>
-        const STORAGE_KEY = 'longevity_database_v12';
+        const STORAGE_KEY = 'longevity_database_v13';
         let peopleDataMap = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         let activeGender = "";
         let openDropdownKey = null;
@@ -176,10 +184,12 @@
         let currentFilter = "ALL";
         let currentSort = "birth-asc";
         let searchQuery = "";
+
         const submitBtnEnabledClass = "w-full bg-cyan-800 hover:bg-cyan-700 text-slate-200 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-sm cursor-pointer text-xs h-10 font-mono tracking-wider uppercase";
         const submitBtnDisabledClass = "w-full bg-slate-800 text-slate-600 font-semibold py-2 px-4 rounded transition-colors duration-75 shadow-none cursor-not-allowed text-xs h-10 font-mono tracking-wider uppercase";
         const btnActiveStyle = "flex-1 h-full text-[11px] font-bold rounded bg-cyan-800 text-slate-200 transition-colors shadow-sm";
         const btnInactiveStyle = "flex-1 h-full text-[11px] font-bold rounded bg-slate-900 text-slate-400 hover:bg-slate-800 transition-colors";
+
         const monthMap = {
             'january': 0, 'jan': 0, 'januery': 0,
             'february': 1, 'feb': 1, 'febuary': 1, 'febrary': 1,
@@ -194,10 +204,12 @@
             'november': 10, 'nov': 10,
             'december': 11, 'dec': 11
         };
+
         function parseHistoricalDate(rawText) {
             if (!rawText) return null;
             let str = rawText.trim();
             if (!str) return null;
+
             const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{1,4})$/);
             if (slashMatch) {
                 const m = parseInt(slashMatch[1], 10) - 1;
@@ -210,6 +222,7 @@
                 if (dt.getMonth() !== m) return null;
                 return { date: dt, isMonthOnly: false };
             }
+
             const monthYearMatch = str.toLowerCase().replace(/,/g, '').match(/^([a-z]+)\s+(\d{1,4})$/);
             if (monthYearMatch && monthMap.hasOwnProperty(monthYearMatch[1])) {
                 const m = monthMap[monthYearMatch[1]];
@@ -219,6 +232,7 @@
                 dt.setHours(0, 0, 0, 0);
                 return { date: dt, isMonthOnly: true };
             }
+
             let cleaned = str.toLowerCase().replace(/(\b\d+)(st|nd|rd|th)\b/g, '$1').replace(/\bof\b/g, ' ').replace(/,/g, ' ').trim();
             const parts = cleaned.split(/\s+/);
             if (parts.length === 3) {
@@ -241,6 +255,7 @@
             }
             return null;
         }
+
         function formatSheetDate(dateObj, isMonthOnly, rawFallback) {
             if (!dateObj) return rawFallback || "";
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -252,46 +267,57 @@
             const y = dateObj.getFullYear() < 1000 ? String(dateObj.getFullYear()).padStart(4, '0') : dateObj.getFullYear();
             return `${m}/${d}/${y}`;
         }
+
         function computeStatus(deathRaw) {
             if (!deathRaw || deathRaw.trim() === "") return "Alive";
             if (deathRaw.trim().toLowerCase() === "unverified") return "Limbo";
             return "Deceased";
         }
+
         function calculateSheetAge(birthIso, deathIso, status) {
             const birthDate = new Date(birthIso);
             const endDate = (status === "Deceased" && deathIso) ? new Date(deathIso) : new Date();
             if (isNaN(birthDate.getTime()) || birthDate > endDate) return { text: "Invalid", numericYears: 0 };
+
             let years = endDate.getFullYear() - birthDate.getFullYear();
             let months = endDate.getMonth() - birthDate.getMonth();
             let days = endDate.getDate() - birthDate.getDate();
+
             if (days < 0) {
                 months--;
                 const prevMonthDays = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
                 days += prevMonthDays;
             }
             if (months < 0) { years--; months += 12; }
+
             return {
                 text: `${years} ${years === 1 ? 'year' : 'years'}`,
                 numericYears: years + (months / 12) + (days / 365.25)
             };
         }
+
         function saveToLocalStorage() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(peopleDataMap));
         }
+
         function getFormValidation() {
             const firstName = document.getElementById('form-first-name').value.trim();
             const lastName = document.getElementById('form-last-name').value.trim();
             const birthRaw = document.getElementById('form-birth-date').value.trim();
             const deathRaw = document.getElementById('form-death-date').value.trim();
+
             if (!firstName || !lastName || !activeGender || !birthRaw) return null;
+
             const parsedBirth = parseHistoricalDate(birthRaw);
             if (!parsedBirth || parsedBirth.date > new Date()) return null;
+
             let parsedDeath = null;
             const status = computeStatus(deathRaw);
             if (status === "Deceased") {
                 parsedDeath = parseHistoricalDate(deathRaw);
                 if (!parsedDeath || parsedDeath.date < parsedBirth.date || parsedDeath.date > new Date()) return null;
             }
+
             return {
                 birthDateObj: parsedBirth.date,
                 birthIsMonthOnly: parsedBirth.isMonthOnly,
@@ -300,12 +326,14 @@
                 status
             };
         }
+
         function updateSubmitButtonState() {
             const btn = document.getElementById('submit-btn');
             const valid = !!getFormValidation();
             btn.disabled = !valid;
             btn.className = valid ? submitBtnEnabledClass : submitBtnDisabledClass;
         }
+
         document.getElementById('form-birth-date').addEventListener('input', function() {
             const preview = document.getElementById('birth-preview');
             if (!this.value.trim()) {
@@ -322,6 +350,7 @@
             }
             updateSubmitButtonState();
         });
+
         document.getElementById('form-death-date').addEventListener('input', function() {
             const preview = document.getElementById('death-preview');
             const val = this.value.trim();
@@ -343,12 +372,14 @@
             }
             updateSubmitButtonState();
         });
+
         document.getElementById('set-unverified-btn').addEventListener('click', function() {
             const deathInput = document.getElementById('form-death-date');
             deathInput.value = "Unverified";
             deathInput.dispatchEvent(new Event('input'));
             document.getElementById('form-last-verified').focus();
         });
+
         ['f', 'm'].forEach(code => {
             const val = code.toUpperCase();
             document.getElementById(`gender-${code}`).addEventListener('click', function() {
@@ -360,9 +391,11 @@
                 updateSubmitButtonState();
             });
         });
+
         ['form-first-name', 'form-middle-name', 'form-last-name', 'form-last-verified'].forEach(id => {
             document.getElementById(id).addEventListener('input', updateSubmitButtonState);
         });
+
         function resetFormDefaults() {
             ['form-first-name', 'form-middle-name', 'form-last-name', 'form-birth-date', 'form-death-date', 'form-last-verified'].forEach(id => {
                 document.getElementById(id).value = '';
@@ -374,9 +407,11 @@
             ['f', 'm'].forEach(c => document.getElementById(`gender-${c}`).className = btnInactiveStyle);
             updateSubmitButtonState();
         }
+
         document.getElementById('submit-btn').addEventListener('click', function() {
             const validData = getFormValidation();
             if (!validData) return;
+
             const localKey = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
             peopleDataMap[localKey] = {
                 firstName: document.getElementById('form-first-name').value.trim(),
@@ -394,6 +429,7 @@
             renderTable();
             resetFormDefaults();
         });
+
         document.getElementById('purge-all-btn').addEventListener('click', function() {
             if (confirm("Are you sure you want to purge all entries from the database?")) {
                 peopleDataMap = {};
@@ -401,17 +437,20 @@
                 renderTable();
             }
         });
+
         document.getElementById('search-input').addEventListener('input', function() {
             searchQuery = this.value.trim().toLowerCase();
             document.getElementById('clear-search-btn').classList.toggle('hidden', !searchQuery);
             renderTable();
         });
+
         document.getElementById('clear-search-btn').addEventListener('click', function() {
             document.getElementById('search-input').value = "";
             searchQuery = "";
             this.classList.add('hidden');
             renderTable();
         });
+
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 currentFilter = this.getAttribute('data-filter');
@@ -423,11 +462,14 @@
                 renderTable();
             });
         });
+
         document.getElementById('sort-select').addEventListener('change', function() {
             currentSort = this.value;
             renderTable();
         });
+
         function handleCellFocus(key) { activelyEditingKey = key; }
+
         function handleNameSave(key, el) {
             const raw = el.innerText.trim();
             if (raw && peopleDataMap[key]) {
@@ -440,6 +482,7 @@
             activelyEditingKey = null;
             renderTable();
         }
+
         function handleBirthSave(key, el) {
             const raw = el.innerText.trim();
             const parsed = parseHistoricalDate(raw);
@@ -453,6 +496,7 @@
             activelyEditingKey = null;
             renderTable();
         }
+
         function handleDeathSave(key, el) {
             const raw = el.innerText.trim();
             if (peopleDataMap[key]) {
@@ -483,6 +527,7 @@
             activelyEditingKey = null;
             renderTable();
         }
+
         function handleVerifiedSave(key, el) {
             const raw = el.innerText.trim();
             if (peopleDataMap[key]) {
@@ -492,6 +537,7 @@
             activelyEditingKey = null;
             renderTable();
         }
+
         function toggleDropdownMenu(key, event) {
             event.stopPropagation();
             const menu = document.getElementById(`dropdown-${key}`);
@@ -508,6 +554,7 @@
                 openDropdownKey = key;
             }
         }
+
         function selectGenderOption(key, val) {
             if (peopleDataMap[key]) {
                 peopleDataMap[key].gender = val;
@@ -516,6 +563,7 @@
                 renderTable();
             }
         }
+
         document.addEventListener('click', function(e) {
             if (openDropdownKey) {
                 const prev = document.getElementById(`dropdown-${openDropdownKey}`);
@@ -531,12 +579,14 @@
                 }
             }
         });
+
         function updateBadges() {
             const entries = Object.values(peopleDataMap);
             document.getElementById('live-count-badge').innerText = entries.length;
             document.getElementById('alive-count-badge').innerText = entries.filter(e => e.status === "Alive").length;
             document.getElementById('limbo-count-badge').innerText = entries.filter(e => e.status === "Limbo").length;
         }
+
         function getStatusBadgeHtml(status) {
             if (status === "Alive") {
                 return `<span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/65">Alive</span>`;
@@ -546,25 +596,36 @@
             }
             return `<span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-slate-900 text-slate-400 border border-slate-700">Deceased</span>`;
         }
+
         function renderTable() {
-            if (activelyEditingKey) return;
+            if (activelyEditingKey || openDropdownKey) return;
             updateBadges();
             const tableWrapper = document.getElementById('table-wrapper');
+            const controlsWrapper = document.getElementById('controls-wrapper');
             const allKeys = Object.keys(peopleDataMap);
+            
             if (allKeys.length === 0) {
                 tableWrapper.classList.add('hidden');
+                controlsWrapper.classList.add('hidden');
+                controlsWrapper.classList.remove('flex');
                 return;
             }
+            
             tableWrapper.classList.remove('hidden');
+            controlsWrapper.classList.remove('hidden');
+            controlsWrapper.classList.add('flex');
+
             let items = allKeys.map(k => {
                 const item = peopleDataMap[k];
                 const fullName = [item.firstName, item.middleName, item.lastName].filter(Boolean).join(" ");
                 const ageInfo = calculateSheetAge(item.birthIso, item.deathIso, item.status);
                 return { localKey: k, ...item, fullName, ageInfo };
             });
+
             if (currentFilter !== "ALL") {
                 items = items.filter(i => i.status === currentFilter);
             }
+
             if (searchQuery) {
                 const queryTerms = searchQuery.split(/\s+/).filter(Boolean);
                 items = items.filter(i => {
@@ -572,12 +633,14 @@
                     return queryTerms.every(term => searchableText.includes(term));
                 });
             }
+
             items.sort((a, b) => {
                 if (currentSort === "birth-asc") return new Date(a.birthIso) - new Date(b.birthIso);
                 if (currentSort === "birth-desc") return new Date(b.birthIso) - new Date(a.birthIso);
                 if (currentSort === "name-asc") return a.fullName.localeCompare(b.fullName);
                 return 0;
             });
+
             const tableBody = document.getElementById('table-body');
             tableBody.innerHTML = items.map(item => `
                 <tr id="row-${item.localKey}" class="hover:bg-slate-900/60 transition-colors text-xs border-b border-slate-800/80">
@@ -621,38 +684,342 @@
                 </tr>
             `).join('');
         }
+
         document.getElementById('load-samples-btn').addEventListener('click', function() {
             const samples = [
+                { firstName: "Marcus", middle: "Aurelius", lastName: "Antoninus", gender: "M", birth: "4/26/0121", death: "3/17/0180", verified: "" },
+                { firstName: "Constantine", middle: "the", lastName: "Great", gender: "M", birth: "2/27/0272", death: "5/22/0337", verified: "" },
+                { firstName: "Aurelius", middle: "", lastName: "Augustinus", gender: "M", birth: "11/13/0354", death: "8/28/0430", verified: "" },
                 { firstName: "King/Emperor", middle: "", lastName: "Charlemagne", gender: "M", birth: "4/2/0748", death: "1/28/0814", verified: "" },
-                { firstName: "William", middle: "", lastName: "Shakespeare", gender: "M", birth: "April 1564", death: "4/23/1616", verified: "" },
-                { firstName: "Jeanne", middleName: "Louise", lastName: "Calment", gender: "F", birth: "2/21/1875", death: "8/4/1997", verified: "" },
-                { firstName: "Ethel", middleName: "May", lastName: "Caterham", gender: "F", birth: "8/21/1909", death: "", verified: "" },
-                { firstName: "Tsune", middleName: "", lastName: "Kimura", gender: "F", birth: "1/12/1913", death: "Unverified", verified: "January 2026" },
-                { firstName: "Haruko", middleName: "", lastName: "Onizuka", gender: "F", birth: "3/18/1913", death: "Unverified", verified: "March 2026" },
-                { firstName: "Sir David", middleName: "Frederick", lastName: "Attenborough", gender: "M", birth: "5/8/1926", death: "", verified: "" },
-                { firstName: "Lilibet", middleName: "Diana", lastName: "Mountbatten-Windsor", gender: "F", birth: "6/4/2021", death: "", verified: "" },
-                { firstName: "Maria", middleName: "Belen", lastName: "Briones", gender: "F", birth: "12/31/1905", death: "6/15/2010", verified: "" },
-                { firstName: "John", middleName: "Henry", lastName: "Tindall", gender: "M", birth: "9/14/1910", death: "2/10/2015", verified: "" },
-                { firstName: "Katsue", middleName: "", lastName: "Shibusawa", gender: "F", birth: "5/5/1912", death: "Unverified", verified: "February 2026" },
-                { firstName: "Robert", middleName: "Louis", lastName: "Stevenson", gender: "M", birth: "11/13/1850", death: "12/3/1894", verified: "" },
-                { firstName: "Marie", middleName: "Sklodowska", lastName: "Curie", gender: "F", birth: "11/7/1867", death: "7/4/1934", verified: "" },
-                { firstName: "Winston", middleName: "Leonard", lastName: "Churchill", gender: "M", birth: "11/30/1874", death: "1/24/1965", verified: "" },
-                { firstName: "Albert", middleName: "", lastName: "Einstein", gender: "M", birth: "3/14/1879", death: "4/18/1955", verified: "" },
-                { firstName: "Ada", middleName: "Byron", lastName: "Lovelace", gender: "F", birth: "12/10/1815", death: "11/27/1852", verified: "" },
-                { firstName: "Nikola", middleName: "", lastName: "Tesla", gender: "M", birth: "7/10/1856", death: "1/7/1943", verified: "" },
-                { firstName: "Mahatma", middleName: "Karamchand", lastName: "Gandhi", gender: "M", birth: "10/2/1869", death: "1/30/1948", verified: "" },
-                { firstName: "Amelia", middleName: "Mary", lastName: "Earhart", gender: "F", birth: "7/24/1897", death: "7/2/1937", verified: "" },
-                { firstName: "Alan", middleName: "Mathison", lastName: "Turing", gender: "M", birth: "6/23/1912", death: "6/7/1954", verified: "" },
-                { firstName: "Oscar", middleName: "Fingal O'Flahertie Wills", lastName: "Wilde", gender: "M", birth: "10/16/1854", death: "11/30/1900", verified: "" }
+                { firstName: "King", middle: "John of", lastName: "England", gender: "M", birth: "12/24/1166", death: "10/19/1216", verified: "" },
+                { firstName: "John", middle: "II of", lastName: "France", gender: "M", birth: "4/26/1319", death: "4/8/1364", verified: "" },
+                { firstName: "Louis", middle: "I of", lastName: "Hungary", gender: "M", birth: "3/5/1326", death: "9/10/1382", verified: "" },
+                { firstName: "Richard", middle: "II of", lastName: "England", gender: "M", birth: "1/6/1367", death: "2/14/1400", verified: "" },
+                { firstName: "Christopher", middle: "", lastName: "Columbus", gender: "M", birth: "10/31/1451", death: "5/20/1506", verified: "" },
+                { firstName: "Leonardo", middle: "da", lastName: "Vinci", gender: "M", birth: "4/15/1452", death: "5/2/1519", verified: "" },
+                { firstName: "Michelangelo", middle: "di Lodovico Buonarroti", lastName: "Simoni", gender: "M", birth: "3/6/1475", death: "2/18/1564", verified: "" },
+                { firstName: "Raffaello", middle: "Sanzio da", lastName: "Urbino", gender: "M", birth: "3/28/1483", death: "4/6/1520", verified: "" },
+                { firstName: "Martin", middle: "", lastName: "Luder", gender: "M", birth: "11/10/1483", death: "2/18/1546", verified: "" },
+                { firstName: "Henry", middle: "VIII of", lastName: "England", gender: "M", birth: "6/28/1491", death: "1/28/1547", verified: "" },
+                { firstName: "Galileo", middle: "", lastName: "Galilei", gender: "M", birth: "2/15/1564", death: "1/8/1642", verified: "" },
+                { firstName: "William", middle: "", lastName: "Shakespeare", gender: "M", birth: "4/23/1564", death: "4/23/1616", verified: "" },
+                { firstName: "Thomas", middle: "", lastName: "Hobbes", gender: "M", birth: "4/5/1588", death: "12/4/1679", verified: "" },
+                { firstName: "John", middle: "IV of", lastName: "Portugal", gender: "M", birth: "3/19/1604", death: "11/6/1656", verified: "" },
+                { firstName: "John", middle: "", lastName: "Milton", gender: "M", birth: "December 1608", death: "11/8/1674", verified: "" },
+                { firstName: "James", middle: "II of", lastName: "England", gender: "M", birth: "10/24/1633", death: "9/16/1701", verified: "" },
+                { firstName: "Louis", middle: "XIV of", lastName: "France", gender: "M", birth: "9/5/1638", death: "9/1/1715", verified: "" },
+                { firstName: "Sir Isaac", middle: "", lastName: "Newton", gender: "M", birth: "1/4/1643", death: "3/31/1727", verified: "" },
+                { firstName: "William", middle: "", lastName: "Penn", gender: "M", birth: "10/24/1644", death: "8/10/1718", verified: "" },
+                { firstName: "Eilif", middle: "", lastName: "Philipsen", gender: "M", birth: "7/21/1682", death: "6/20/1785", verified: "" },
+                { firstName: "Ebenezer", middle: "", lastName: "Cobb II", gender: "M", birth: "3/22/1694", death: "12/8/1801", verified: "" },
+                { firstName: "Jean", middle: "", lastName: "Thurel", gender: "M", birth: "9/6/1698", death: "3/10/1807", verified: "" },
+                { firstName: "Ann", middle: "Simpson", lastName: "Hutchinson", gender: "F", birth: "3/28/1699", death: "1/4/1801", verified: "" },
+                { firstName: "Benjamin", middle: "", lastName: "Franklin", gender: "M", birth: "1/17/1706", death: "4/17/1790", verified: "" },
+                { firstName: "Samuel", middle: "", lastName: "Johnson", gender: "M", birth: "9/18/1709", death: "12/13/1784", verified: "" },
+                { firstName: "Adolf", middle: "Frederick of", lastName: "Sweden", gender: "M", birth: "5/14/1710", death: "2/12/1771", verified: "" },
+                { firstName: "George", middle: "III of", lastName: "England", gender: "M", birth: "6/4/1738", death: "1/29/1820", verified: "" },
+                { firstName: "Robert", middle: "Scot", lastName: "(b. Scott)", gender: "M", birth: "10/2/1745", death: "11/3/1823", verified: "" },
+                { firstName: "Ebenezer", middle: "", lastName: "Merriam", gender: "M", birth: "2/7/1751", death: "4/8/1790", verified: "" },
+                { firstName: "Alexander", middle: "", lastName: "Hamilton", gender: "M", birth: "1/11/1755", death: "7/12/1804", verified: "" },
+                { firstName: "William", middle: "Russell", lastName: "Birch", gender: "M", birth: "4/9/1755", death: "8/7/1834", verified: "" },
+                { firstName: "Wolfgang", middle: "Amadeus", lastName: "Mozart", gender: "M", birth: "1/27/1756", death: "12/5/1791", verified: "" },
+                { firstName: "Noah", middle: "", lastName: "Webster", gender: "M", birth: "October 1758", death: "5/28/1843", verified: "" },
+                { firstName: "Johann", middle: "Christoph Friedrich von", lastName: "Schiller", gender: "M", birth: "11/10/1759", death: "5/9/1805", verified: "" },
+                { firstName: "Napoleon", middle: "", lastName: "Bonaparte", gender: "M", birth: "8/15/1769", death: "5/5/1821", verified: "" },
+                { firstName: "Ludwig", middle: "van", lastName: "Beethoven", gender: "M", birth: "12/16/1770", death: "3/26/1827", verified: "" },
+                { firstName: "Geert", middle: "Adriaans", lastName: "Boomgaard", gender: "M", birth: "9/21/1788", death: "2/3/1899", verified: "" },
+                { firstName: "Margaret", middle: "Ann", lastName: "Neve", gender: "F", birth: "5/18/1792", death: "4/4/1903", verified: "" },
+                { firstName: "James", middle: "Barton", lastName: "Longacre", gender: "M", birth: "8/11/1794", death: "1/1/1869", verified: "" },
+                { firstName: "William", middle: "", lastName: "Barber", gender: "M", birth: "5/2/1807", death: "8/31/1879", verified: "" },
+                { firstName: "Edgar", middle: "Allan", lastName: "Poe", gender: "M", birth: "1/19/1809", death: "10/7/1849", verified: "" },
+                { firstName: "Charles", middle: "Robert", lastName: "Darwin", gender: "M", birth: "2/12/1809", death: "4/19/1882", verified: "" },
+                { firstName: "William", middle: "Ewart", lastName: "Gladstone", gender: "M", birth: "12/29/1809", death: "5/19/1898", verified: "" },
+                { firstName: "Charles", middle: "", lastName: "Dickens", gender: "M", birth: "2/7/1812", death: "6/9/1870", verified: "" },
+                { firstName: "Augusta", middle: "Ada", lastName: "Byron", gender: "F", birth: "12/10/1815", death: "11/27/1852", verified: "" },
+                { firstName: "Susan", middle: "B.", lastName: "Anthony", gender: "F", birth: "2/15/1820", death: "3/13/1906", verified: "" },
+                { firstName: "John", middle: "Richard", lastName: "Voorhis", gender: "M", birth: "7/27/1829", death: "2/5/1932", verified: "" },
+                { firstName: "Lydia", middle: "Ann (Garcelon)", lastName: "Steward", gender: "F", birth: "10/1/1829", death: "12/25/1931", verified: "" },
+                { firstName: "Alexandre", middle: "Gustave", lastName: "Eiffel", gender: "M", birth: "12/15/1832", death: "12/27/1923", verified: "" },
+                { firstName: "Delavan", middle: "Levant", lastName: "Leonard", gender: "M", birth: "7/20/1834", death: "1/26/1917", verified: "" },
+                { firstName: "Rebecca", middle: "Ann", lastName: "Latimer", gender: "F", birth: "6/10/1835", death: "1/24/1930", verified: "" },
+                { firstName: "Galusha", middle: "Marion", lastName: "Cole", gender: "M", birth: "8/15/1837", death: "4/11/1931", verified: "" },
+                { firstName: "John", middle: "Wilkes", lastName: "Booth", gender: "M", birth: "5/10/1838", death: "4/26/1865", verified: "" },
+                { firstName: "Richard", middle: "D'Oyly", lastName: "Carte", gender: "M", birth: "5/3/1844", death: "4/3/1901", verified: "" },
+                { firstName: "Carl", middle: "Friedrich", lastName: "Benz", gender: "M", birth: "11/25/1844", death: "4/4/1929", verified: "" },
+                { firstName: "Thomas", middle: "Alva", lastName: "Edison", gender: "M", birth: "2/11/1847", death: "10/18/1931", verified: "" },
+                { firstName: "Alexander", middle: "Graham", lastName: "Bell", gender: "M", birth: "3/3/1847", death: "8/2/1922", verified: "" },
+                { firstName: "John", middle: "Drew", lastName: "Jr.", gender: "M", birth: "11/13/1853", death: "7/9/1927", verified: "" },
+                { firstName: "Sir Edward", middle: "Henry", lastName: "Carson", gender: "M", birth: "2/9/1854", death: "10/22/1935", verified: "" },
+                { firstName: "Oscar", middle: "Fingal O'Flahertie Wills", lastName: "Wilde", gender: "M", birth: "10/16/1854", death: "11/30/1900", verified: "" },
+                { firstName: "Nikola", middle: "", lastName: "Tesla", gender: "M", birth: "7/10/1856", death: "1/7/1943", verified: "" },
+                { firstName: "Sir Arthur", middle: "Conan", lastName: "Doyle", gender: "M", birth: "5/22/1859", death: "7/7/1930", verified: "" },
+                { firstName: "Samuel", middle: "James", lastName: "Seymour", gender: "M", birth: "3/28/1860", death: "4/12/1956", verified: "" },
+                { firstName: "John", middle: "Joseph", lastName: "Pershing", gender: "M", birth: "9/13/1860", death: "7/15/1948", verified: "" },
+                { firstName: "John", middle: "Jacob", lastName: "Astor IV", gender: "M", birth: "7/13/1864", death: "4/15/1912", verified: "" },
+                { firstName: "Maria", middle: "Salomea Skłodowska", lastName: "Curie", gender: "F", birth: "11/7/1867", death: "7/4/1934", verified: "" },
+                { firstName: "Florence", middle: "Ada Bethia", lastName: "Pannell", gender: "F", birth: "12/26/1868", death: "10/20/1980", verified: "" },
+                { firstName: "Lord Alfred", middle: "Bruce", lastName: "Douglas", gender: "M", birth: "10/22/1870", death: "3/20/1945", verified: "" },
+                { firstName: "Bertrand", middle: "Arthur William", lastName: "Russell", gender: "M", birth: "5/18/1872", death: "2/2/1970", verified: "" },
+                { firstName: "Robert", middle: "Lee", lastName: "Frost", gender: "M", birth: "3/26/1874", death: "1/29/1963", verified: "" },
+                { firstName: "Sir Winston", middle: "Leonard Spencer", lastName: "Churchill", gender: "M", birth: "11/30/1874", death: "1/24/1965", verified: "" },
+                { firstName: "Jeanne", middle: "Louise", lastName: "Calment", gender: "F", birth: "2/21/1875", death: "8/4/1997", verified: "" },
+                { firstName: "Albert", middle: "", lastName: "Einstein", gender: "M", birth: "3/14/1879", death: "4/18/1955", verified: "" },
+                { firstName: "Porter", middle: "Emerson", lastName: "Browne", gender: "M", birth: "6/22/1879", death: "9/20/1934", verified: "" },
+                { firstName: "Lev", middle: "Davidovich", lastName: "Trotsky", gender: "M", birth: "11/7/1879", death: "8/21/1940", verified: "" },
+                { firstName: "Gunichi", middle: "", lastName: "Mikawa", gender: "M", birth: "8/29/1888", death: "2/25/1981", verified: "" },
+                { firstName: "Johann", middle: "Josef von", lastName: "Mayer", gender: "M", birth: "8/29/1888", death: "7/21/1952", verified: "" },
+                { firstName: "Sir Charles", middle: "Spencer Chaplin", lastName: "Jr.", gender: "M", birth: "4/16/1889", death: "12/25/1977", verified: "" },
+                { firstName: "Adolf", middle: "", lastName: "Hitler", gender: "M", birth: "4/20/1889", death: "4/30/1945", verified: "" },
+                { firstName: "Albert", middle: "Arthur", lastName: "Bestic", gender: "M", birth: "8/26/1890", death: "12/20/1962", verified: "" },
+                { firstName: "Agatha", middle: "", lastName: "Christie", gender: "F", birth: "9/15/1890", death: "1/12/1976", verified: "" },
+                { firstName: "Ole", middle: "Kirk", lastName: "Christiansen", gender: "M", birth: "4/7/1891", death: "3/11/1958", verified: "" },
+                { firstName: "Henry", middle: "James", lastName: "Tandey", gender: "M", birth: "8/30/1891", death: "12/20/1977", verified: "" },
+                { firstName: "John", middle: "Ronald Reuel", lastName: "Tolkien", gender: "M", birth: "1/3/1892", death: "9/2/1973", verified: "" },
+                { firstName: "Alfred", middle: "Abraham Knopf", lastName: "Sr.", gender: "M", birth: "9/12/1892", death: "8/11/1984", verified: "" },
+                { firstName: "Amelia", middle: "Mary", lastName: "Earhart", gender: "F", birth: "7/24/1897", death: "7/2/1937", verified: "" },
+                { firstName: "Rudolf", middle: "\"Rudi\"", lastName: "Dassler", gender: "M", birth: "3/26/1898", death: "10/27/1974", verified: "" },
+                { firstName: "Buck", middle: "", lastName: "Ruxton", gender: "M", birth: "3/21/1899", death: "12/5/1936", verified: "" },
+                { firstName: "Madge", middle: "Elizabeth", lastName: "Blake", gender: "F", birth: "5/31/1899", death: "2/19/1969", verified: "" },
+                { firstName: "Ernest", middle: "Miller", lastName: "Hemingway", gender: "M", birth: "7/21/1899", death: "7/2/1961", verified: "" },
+                { firstName: "Neil", middle: "", lastName: "Hamilton", gender: "M", birth: "9/9/1899", death: "9/24/1984", verified: "" },
+                { firstName: "Emma", middle: "Martina Luigia", lastName: "Morano", gender: "F", birth: "11/29/1899", death: "4/15/2017", verified: "" },
+                { firstName: "Elizabeth", middle: "Angela Marguerite", lastName: "Bowes-Lyon", gender: "F", birth: "8/4/1900", death: "3/30/2002", verified: "" },
+                { firstName: "Adolf", middle: "\"Adi\"", lastName: "Dassler", gender: "M", birth: "11/3/1900", death: "9/6/1978", verified: "" },
+                { firstName: "James", middle: "Mercer Langston", lastName: "Hughes", gender: "M", birth: "2/1/1901", death: "5/22/1967", verified: "" },
+                { firstName: "Walter", middle: "Elias", lastName: "Disney", gender: "M", birth: "12/5/1901", death: "12/15/1966", verified: "" },
+                { firstName: "Charles", middle: "Leslie", lastName: "McFarlane", gender: "M", birth: "10/25/1902", death: "9/6/1977", verified: "" },
+                { firstName: "Alan", middle: "William Napier-Clavering", lastName: "Clavering", gender: "M", birth: "1/7/1903", death: "8/8/1988", verified: "" },
+                { firstName: "Peter", middle: "", lastName: "Dawnay", gender: "M", birth: "8/14/1904", death: "7/1/1989", verified: "" },
+                { firstName: "Richard", middle: "Sperry", lastName: "Yeoman", gender: "M", birth: "8/15/1904", death: "11/9/1988", verified: "" },
+                { firstName: "Mildred", middle: "Augustine Wirt", lastName: "Benson", gender: "F", birth: "7/10/1905", death: "5/28/2002", verified: "" },
+                { firstName: "Otto", middle: "Adolf", lastName: "Eichmann", gender: "M", birth: "3/19/1906", death: "6/1/1962", verified: "" },
+                { firstName: "Angela", middle: "Christine Rose", lastName: "Montagu Douglas Scott", gender: "F", birth: "12/26/1906", death: "9/28/2000", verified: "" },
+                { firstName: "César", middle: "Julio", lastName: "Romero Jr.", gender: "M", birth: "2/15/1907", death: "1/1/1994", verified: "" },
+                { firstName: "Oliver", middle: "Burgess", lastName: "Meredith", gender: "M", birth: "11/16/1907", death: "9/9/1997", verified: "" },
+                { firstName: "Ethel", middle: "May", lastName: "Caterham", gender: "F", birth: "8/21/1909", death: "", verified: "" },
+                { firstName: "Marie-Rose", middle: "", lastName: "Tessier", gender: "F", birth: "5/21/1910", death: "2/10/2026", verified: "" },
+                { firstName: "Naomi", middle: "Washington", lastName: "Whitehead", gender: "F", birth: "9/26/1910", death: "", verified: "" },
+                { firstName: "Lucia", middle: "Laura", lastName: "Sangenito", gender: "F", birth: "11/22/1910", death: "", verified: "" },
+                { firstName: "Yolanda", middle: "Beltrão de", lastName: "Azevedo", gender: "F", birth: "1/13/1911", death: "", verified: "" },
+                { firstName: "Miyoko", middle: "", lastName: "Hiroyasu", gender: "F", birth: "1/23/1911", death: "7/29/2025", verified: "" },
+                { firstName: "Anthony", middle: "Joseph Mancinelli", lastName: "Sr.", gender: "M", birth: "3/2/1911", death: "9/19/2019", verified: "" },
+                { firstName: "Shigeko", middle: "", lastName: "Kagawa", gender: "F", birth: "5/28/1911", death: "8/27/2026", verified: "" },
+                { firstName: "Ilse", middle: "", lastName: "Meingast", gender: "F", birth: "3/14/1912", death: "8/23/2026", verified: "" },
+                { firstName: "Maria", middle: "Jorge Esteves de", lastName: "Almeida", gender: "F", birth: "5/28/1912", death: "7/8/2026", verified: "" },
+                { firstName: "Alan", middle: "Mathison", lastName: "Turing", gender: "M", birth: "6/23/1912", death: "6/7/1954", verified: "" },
+                { firstName: "Madeleine", middle: "", lastName: "Dellamonica", gender: "F", birth: "7/23/1912", death: "", verified: "" },
+                { firstName: "João", middle: "", lastName: "Marinho Neto", gender: "M", birth: "10/5/1912", death: "", verified: "" },
+                { firstName: "Maria", middle: "da Conceição", lastName: "Brito", gender: "F", birth: "12/31/1912", death: "8/22/2026", verified: "" },
+                { firstName: "Yukie", middle: "", lastName: "Takahashi", gender: "F", birth: "1/4/1913", death: "", verified: "" },
+                { firstName: "Tsune", middle: "", lastName: "Kimura", gender: "F", birth: "1/12/1913", death: "Unverified", verified: "January 2026" },
+                { firstName: "Rosa", middle: "Louise McCauley", lastName: "Parks", gender: "F", birth: "2/4/1913", death: "10/24/2005", verified: "" },
+                { firstName: "Eulalia", middle: "", lastName: "Bravo Bravo", gender: "F", birth: "2/12/1913", death: "", verified: "" },
+                { firstName: "Marcelle", middle: "", lastName: "Pressac", gender: "F", birth: "3/10/1913", death: "9/12/2026", verified: "" },
+                { firstName: "Haruko", middle: "", lastName: "Onizuka", gender: "F", birth: "3/18/1913", death: "Unverified", verified: "March 2026" },
+                { firstName: "Francis", middle: "", lastName: "Piscatella", gender: "F", birth: "4/20/1913", death: "", verified: "" },
+                { firstName: "Ichi", middle: "", lastName: "Kubota", gender: "F", birth: "5/30/1913", death: "", verified: "" },
+                { firstName: "Dorothy", middle: "Mildred", lastName: "Allison", gender: "F", birth: "7/5/1913", death: "", verified: "" },
+                { firstName: "Koyu", middle: "", lastName: "Morita", gender: "F", birth: "7/12/1913", death: "", verified: "" },
+                { firstName: "Yasue", middle: "", lastName: "Saitō", gender: "F", birth: "7/17/1913", death: "Unverified", verified: "January 2026" },
+                { firstName: "Luisa", middle: "", lastName: "Maggioni", gender: "F", birth: "7/19/1913", death: "", verified: "" },
+                { firstName: "Rosa", middle: "Laura Torres", lastName: "Barra", gender: "F", birth: "7/20/1913", death: "", verified: "" },
+                { firstName: "Teresa", middle: "Fernandez", lastName: "Casado", gender: "F", birth: "7/29/1913", death: "", verified: "" },
+                { firstName: "Chitose", middle: "", lastName: "Awata", gender: "F", birth: "8/20/1913", death: "", verified: "" },
+                { firstName: "Kiyoko", middle: "", lastName: "Kondō", gender: "F", birth: "9/1/1913", death: "", verified: "" },
+                { firstName: "Aileen", middle: "Emily", lastName: "Kars", gender: "F", birth: "9/12/1913", death: "", verified: "" },
+                { firstName: "Doris", middle: "", lastName: "Noreen", gender: "F", birth: "9/15/1913", death: "", verified: "" },
+                { firstName: "Ayako", middle: "", lastName: "Kyōtani", gender: "F", birth: "9/29/1913", death: "Unverified", verified: "September 2026" },
+                { firstName: "Ken", middle: "", lastName: "Weeks", gender: "M", birth: "10/5/1913", death: "", verified: "" },
+                { firstName: "Samuele", middle: "Henriette Anne", lastName: "Goustille", gender: "F", birth: "10/12/1913", death: "4/3/2026", verified: "" },
+                { firstName: "Misao", middle: "", lastName: "Kobayashi", gender: "F", birth: "10/27/1913", death: "6/19/2026", verified: "" },
+                { firstName: "Tsutae", middle: "", lastName: "Hayashi", gender: "F", birth: "10/28/1913", death: "", verified: "" },
+                { firstName: "Zoraida", middle: "", lastName: "Montezuma", gender: "F", birth: "10/31/1913", death: "", verified: "" },
+                { firstName: "Take", middle: "", lastName: "Satō", gender: "F", birth: "11/21/1913", death: "", verified: "" },
+                { firstName: "Margaret", middle: "", lastName: "Cryer", gender: "F", birth: "11/25/1913", death: "6/23/2026", verified: "" },
+                { firstName: "Shime", middle: "", lastName: "Nakanishi", gender: "F", birth: "1/3/1914", death: "Unverified", verified: "March 2026" },
+                { firstName: "Elizabeth \"Betty\"", middle: "", lastName: "Werrenrath", gender: "F", birth: "1/28/1914", death: "", verified: "" },
+                { firstName: "Lina", middle: "", lastName: "Anundsen", gender: "F", birth: "11/12/1914", death: "8/2/2026", verified: "" },
+                { firstName: "Mary", middle: "Jane", lastName: "Rogerson", gender: "F", birth: "10/8/1915", death: "9/15/1935", verified: "" },
+                { firstName: "Maria", middle: "Francesca", lastName: "Pastore", gender: "F", birth: "10/16/1915", death: "7/30/2026", verified: "" },
+                { firstName: "Tsutomu", middle: "", lastName: "Yamaguchi", gender: "M", birth: "3/16/1916", death: "1/4/2010", verified: "" },
+                { firstName: "Stafford", middle: "Alois", lastName: "Repp", gender: "M", birth: "4/26/1918", death: "11/5/1974", verified: "" },
+                { firstName: "Nelson", middle: "Rolihlahla", lastName: "Mandela", gender: "M", birth: "7/18/1918", death: "12/5/2013", verified: "" },
+                { firstName: "Efrem", middle: "", lastName: "Zimbalist Jr.", gender: "M", birth: "11/30/1918", death: "5/2/2014", verified: "" },
+                { firstName: "Joseph", middle: "Patrick", lastName: "Cranshaw", gender: "M", birth: "6/17/1919", death: "12/28/2005", verified: "" },
+                { firstName: "Howard", middle: "Tracy", lastName: "Hall", gender: "M", birth: "10/20/1919", death: "7/25/2008", verified: "" },
+                { firstName: "Jackson", middle: "DeForest", lastName: "Kelley", gender: "M", birth: "1/20/1920", death: "6/11/1999", verified: "" },
+                { firstName: "Lewis", middle: "Gilbert", lastName: "Wilson", gender: "M", birth: "1/28/1920", death: "8/9/2000", verified: "" },
+                { firstName: "James", middle: "Montgomery", lastName: "Doohan", gender: "M", birth: "3/3/1920", death: "7/20/2005", verified: "" },
+                { firstName: "Godtfred", middle: "Kirk", lastName: "Christiansen", gender: "M", birth: "7/8/1920", death: "7/13/1995", verified: "" },
+                { firstName: "Rosalind", middle: "Elsie", lastName: "Franklin", gender: "F", birth: "7/25/1920", death: "4/16/1958", verified: "" },
+                { firstName: "Eugene", middle: "Wesley Roddenberry", lastName: "Sr.", gender: "M", birth: "8/19/1921", death: "10/24/1991", verified: "" },
+                { firstName: "Betty", middle: "Marion", lastName: "White", gender: "F", birth: "1/17/1922", death: "12/31/2021", verified: "" },
+                { firstName: "Sir Christopher", middle: "Frank Carandini", lastName: "Lee", gender: "M", birth: "5/27/1922", death: "6/7/2015", verified: "" },
+                { firstName: "Stanley", middle: "Martin", lastName: "Lieber", gender: "M", birth: "12/28/1922", death: "11/12/2018", verified: "" },
+                { firstName: "Robert", middle: "Francis", lastName: "Hastings", gender: "M", birth: "4/18/1925", death: "6/30/2014", verified: "" },
+                { firstName: "Elizabeth", middle: "Alexandra Mary", lastName: "Windsor", gender: "F", birth: "4/21/1926", death: "9/8/2022", verified: "" },
+                { firstName: "Sir David", middle: "Frederick", lastName: "Attenborough", gender: "M", birth: "5/8/1926", death: "", verified: "" },
+                { firstName: "Marilyn", middle: "", lastName: "Monroe", gender: "F", birth: "6/1/1926", death: "8/4/1962", verified: "" },
+                { firstName: "Mel", middle: "", lastName: "Brooks", gender: "M", birth: "6/28/1926", death: "", verified: "" },
+                { firstName: "Adam", middle: "", lastName: "West", gender: "M", birth: "9/19/1928", death: "6/9/2017", verified: "" },
+                { firstName: "Harrison", middle: "Ruffin", lastName: "Tyler", gender: "M", birth: "11/9/1928", death: "5/25/2025", verified: "" },
+                { firstName: "Martin", middle: "Luther", lastName: "King Jr.", gender: "M", birth: "1/15/1929", death: "4/4/1968", verified: "" },
+                { firstName: "Dolores", middle: "", lastName: "Huerta", gender: "F", birth: "4/10/1930", death: "10/28/2026", verified: "" },
+                { firstName: "Clive", middle: "Selsby", lastName: "Revill", gender: "M", birth: "4/18/1930", death: "3/11/2025", verified: "" },
+                { firstName: "Clint", middle: "", lastName: "Eastwood Jr.", gender: "M", birth: "5/31/1930", death: "", verified: "" },
+                { firstName: "Richard", middle: "St John Francis", lastName: "Harris", gender: "M", birth: "10/1/1930", death: "10/25/2002", verified: "" },
+                { firstName: "William", middle: "Alan", lastName: "Shatner", gender: "M", birth: "3/22/1931", death: "", verified: "" },
+                { firstName: "Leonard", middle: "Simon", lastName: "Nimoy", gender: "M", birth: "3/26/1931", death: "2/27/2015", verified: "" },
+                { firstName: "Daniel", middle: "M.", lastName: "Carney", gender: "M", birth: "10/6/1931", death: "11/13/2026", verified: "" },
+                { firstName: "Frank", middle: "John Gorshin", lastName: "Jr.", gender: "M", birth: "4/5/1933", death: "5/17/2005", verified: "" },
+                { firstName: "Julia", middle: "Chalene", lastName: "Newmeyer", gender: "F", birth: "8/16/1933", death: "", verified: "" },
+                { firstName: "Donald", middle: "Roan", lastName: "Dunagan", gender: "M", birth: "8/16/1934", death: "11/4/2026", verified: "" },
+                { firstName: "Dame Judith", middle: "Olivia", lastName: "Dench", gender: "F", birth: "12/9/1934", death: "", verified: "" },
+                { firstName: "Dame Margaret", middle: "Natalie", lastName: "Smith", gender: "F", birth: "12/28/1934", death: "9/27/2024", verified: "" },
+                { firstName: "Lee", middle: "Ann", lastName: "Meriwether", gender: "F", birth: "5/27/1935", death: "", verified: "" },
+                { firstName: "Dame Julie", middle: "", lastName: "Andrews", gender: "F", birth: "10/1/1935", death: "", verified: "" },
+                { firstName: "Pope", middle: "", lastName: "Francis", gender: "M", birth: "12/17/1936", death: "4/21/2025", verified: "" },
+                { firstName: "George", middle: "", lastName: "Takei", gender: "M", birth: "4/20/1937", death: "", verified: "" },
+                { firstName: "Morgan", middle: "", lastName: "Freeman", gender: "M", birth: "6/1/1937", death: "", verified: "" },
+                { firstName: "John", middle: "Davison", lastName: "Rockefeller IV", gender: "M", birth: "6/18/1937", death: "11/6/2026", verified: "" },
+                { firstName: "Philip", middle: "Hampson", lastName: "Knight", gender: "M", birth: "2/24/1938", death: "", verified: "" },
+                { firstName: "Frank", middle: "Lawrence", lastName: "Carney", gender: "M", birth: "4/26/1938", death: "12/2/2020", verified: "" },
+                { firstName: "Sir Ian", middle: "Murray", lastName: "McKellen", gender: "M", birth: "5/25/1939", death: "", verified: "" },
+                { firstName: "Mary", middle: "Jean \"Lily\"", lastName: "Tomlin", gender: "F", birth: "9/1/1939", death: "", verified: "" },
+                { firstName: "Margaret", middle: "Eleanor", lastName: "Atwood", gender: "F", birth: "11/18/1939", death: "", verified: "" },
+                { firstName: "Burt", middle: "", lastName: "Ward", gender: "M", birth: "7/6/1940", death: "", verified: "" },
+                { firstName: "Sir Patrick", middle: "Hewes", lastName: "Stewart", gender: "M", birth: "7/13/1940", death: "10/28/2026", verified: "" },
+                { firstName: "Paul", middle: "Hamilton Williams", lastName: "Jr.", gender: "M", birth: "9/19/1940", death: "", verified: "" },
+                { firstName: "Sir Michael", middle: "John", lastName: "Gambon", gender: "M", birth: "10/19/1940", death: "9/27/2023", verified: "" },
+                { firstName: "Peter", middle: "Claver", lastName: "Cullen", gender: "M", birth: "7/28/1941", death: "8/26/2026", verified: "" },
+                { firstName: "Stephen", middle: "William", lastName: "Hawking", gender: "M", birth: "1/8/1942", death: "3/14/2018", verified: "" },
+                { firstName: "Kenneth", middle: "\"Patriotic Kenny\"", lastName: "Jary", gender: "M", birth: "1/29/1942", death: "5/16/2026", verified: "" },
+                { firstName: "Harrison", middle: "", lastName: "Ford", gender: "M", birth: "7/13/1942", death: "", verified: "" },
+                { firstName: "Robert", middle: "Norman", lastName: "Ross", gender: "M", birth: "10/29/1942", death: "7/4/1995", verified: "" },
+                { firstName: "Sir Karl", middle: "William Pamp", lastName: "Jenkins", gender: "M", birth: "2/17/1944", death: "", verified: "" },
+                { firstName: "Dame", middle: "", lastName: "Helen Mirren", gender: "F", birth: "7/24/1945", death: "", verified: "" },
+                { firstName: "Dolly", middle: "Rebecca", lastName: "Parton", gender: "F", birth: "1/19/1946", death: "8/25/2026", verified: "" },
+                { firstName: "Franklin", middle: "Wendell", lastName: "Welker", gender: "M", birth: "3/12/1946", death: "", verified: "" },
+                { firstName: "Timothy", middle: "James", lastName: "Curry", gender: "M", birth: "4/19/1946", death: "8/25/2026", verified: "" },
+                { firstName: "Charles", middle: "Morley", lastName: "Baxter", gender: "M", birth: "5/13/1947", death: "", verified: "" },
+                { firstName: "Arnold", middle: "Alois", lastName: "Schwarzenegger", gender: "M", birth: "7/30/1947", death: "", verified: "" },
+                { firstName: "Mary", middle: "Temple", lastName: "Grandin", gender: "F", birth: "8/29/1947", death: "", verified: "" },
+                { firstName: "Stephen", middle: "Edwin", lastName: "King", gender: "M", birth: "9/21/1947", death: "", verified: "" },
+                { firstName: "Kjeld", middle: "Kirk", lastName: "Kristiansen", gender: "M", birth: "12/27/1947", death: "", verified: "" },
+                { firstName: "John", middle: "Sherwood de Lancie", lastName: "Jr.", gender: "M", birth: "3/20/1948", death: "", verified: "" },
+                { firstName: "Charles", middle: "Philip Arthur George", lastName: "Windsor", gender: "M", birth: "11/14/1948", death: "", verified: "" },
+                { firstName: "Samuel", middle: "Leroy", lastName: "Jackson", gender: "M", birth: "12/21/1948", death: "", verified: "" },
+                { firstName: "Brent", middle: "Jay", lastName: "Spiner", gender: "M", birth: "2/2/1949", death: "", verified: "" },
+                { firstName: "Cheryl", middle: "Gates", lastName: "McFadden", gender: "F", birth: "3/2/1949", death: "", verified: "" },
+                { firstName: "Michael", middle: "", lastName: "Keaton", gender: "M", birth: "9/5/1951", death: "", verified: "" },
+                { firstName: "Mark", middle: "Richard", lastName: "Hamill", gender: "M", birth: "9/25/1951", death: "", verified: "" },
+                { firstName: "Michael", middle: "", lastName: "Dorn", gender: "M", birth: "12/9/1952", death: "", verified: "" },
+                { firstName: "Timothy", middle: "Alan", lastName: "Dick", gender: "M", birth: "6/13/1953", death: "", verified: "" },
+                { firstName: "Anthony", middle: "Marc", lastName: "Shalhoub", gender: "M", birth: "10/9/1953", death: "", verified: "" },
+                { firstName: "Jackie", middle: "", lastName: "Chan", gender: "M", birth: "4/7/1954", death: "", verified: "" },
+                { firstName: "Rowan", middle: "Sebastian", lastName: "Atkinson", gender: "M", birth: "1/6/1955", death: "", verified: "" },
+                { firstName: "Jonathan", middle: "Kimble", lastName: "Simmons", gender: "M", birth: "1/9/1955", death: "", verified: "" },
+                { firstName: "Steven", middle: "Paul", lastName: "Jobs", gender: "M", birth: "2/24/1955", death: "10/5/2011", verified: "" },
+                { firstName: "Katherine", middle: "Kiernan Maria", lastName: "Mulgrew", gender: "F", birth: "4/29/1955", death: "", verified: "" },
+                { firstName: "Pope", middle: "", lastName: "Leo XIV", gender: "M", birth: "9/14/1955", death: "", verified: "" },
+                { firstName: "William", middle: "Henry", lastName: "Gates III", gender: "M", birth: "10/28/1955", death: "", verified: "" },
+                { firstName: "William", middle: "Sanford", lastName: "Nye", gender: "M", birth: "11/27/1955", death: "", verified: "" },
+                { firstName: "Kevin", middle: "", lastName: "Conroy", gender: "M", birth: "11/30/1955", death: "11/10/2022", verified: "" },
+                { firstName: "Thomas", middle: "Jeffrey", lastName: "Hanks", gender: "M", birth: "7/9/1956", death: "", verified: "" },
+                { firstName: "Carrie", middle: "Frances", lastName: "Fisher", gender: "F", birth: "10/21/1956", death: "12/27/2016", verified: "" },
+                { firstName: "Frank", middle: "Theodore", lastName: "Levine", gender: "M", birth: "5/29/1957", death: "", verified: "" },
+                { firstName: "Paul", middle: "McClaran", lastName: "Dini", gender: "M", birth: "8/7/1957", death: "", verified: "" },
+                { firstName: "Michael", middle: "Joseph", lastName: "Jackson", gender: "M", birth: "8/29/1958", death: "6/25/2009", verified: "" },
+                { firstName: "Neil", middle: "", lastName: "deGrasse Tyson", gender: "M", birth: "10/5/1958", death: "", verified: "" },
+                { firstName: "Loren", middle: "", lastName: "Lester", gender: "M", birth: "10/4/1960", death: "", verified: "" },
+                { firstName: "Timothy", middle: "Donald", lastName: "Cook", gender: "M", birth: "11/1/1960", death: "", verified: "" },
+                { firstName: "Jeffrey", middle: "Kent \"Swampy\"", lastName: "Marsh", gender: "M", birth: "12/9/1960", death: "", verified: "" },
+                { firstName: "Diana", middle: "Frances", lastName: "Spencer", gender: "F", birth: "7/1/1961", death: "8/31/1997", verified: "" },
+                { firstName: "David", middle: "Brent", lastName: "Baszucki", gender: "M", birth: "1/20/1963", death: "", verified: "" },
+                { firstName: "Dan", middle: "", lastName: "Povenmire", gender: "M", birth: "9/18/1963", death: "", verified: "" },
+                { firstName: "Paul", middle: "William", lastName: "Dobson", gender: "M", birth: "12/7/1963", death: "", verified: "" },
+                { firstName: "Richard", middle: "Russell Riordan", lastName: "Jr.", gender: "M", birth: "6/5/1964", death: "", verified: "" },
+                { firstName: "Robert", middle: "John Downey", lastName: "Jr.", gender: "M", birth: "4/4/1965", death: "", verified: "" },
+                { firstName: "Laurence", middle: "Gregory", lastName: "Watkins", gender: "M", birth: "6/9/1965", death: "", verified: "" },
+                { firstName: "Joanne", middle: "K.", lastName: "Rowling", gender: "F", birth: "7/31/1965", death: "", verified: "" },
+                { firstName: "Michael", middle: "", lastName: "Hegner", gender: "M", birth: "6/19/1966", death: "", verified: "" },
+                { firstName: "Mark", middle: "", lastName: "Oliver", gender: "M", birth: "9/21/1966", death: "", verified: "" },
+                { firstName: "Gordon", middle: "James", lastName: "Ramsay", gender: "M", birth: "11/8/1966", death: "", verified: "" },
+                { firstName: "Kathleen", middle: "", lastName: "Barr", gender: "F", birth: "4/6/1967", death: "", verified: "" },
+                { firstName: "Erik", middle: "Stefan", lastName: "Cassel", gender: "M", birth: "9/16/1967", death: "2/11/2013", verified: "" },
+                { firstName: "Daniel", middle: "Wroughton", lastName: "Craig", gender: "M", birth: "3/2/1968", death: "", verified: "" },
+                { firstName: "Kristin", middle: "Dawn", lastName: "Chenoweth", gender: "F", birth: "7/24/1968", death: "", verified: "" },
+                { firstName: "Willard", middle: "Carroll Smith", lastName: "II", gender: "M", birth: "9/25/1968", death: "", verified: "" },
+                { firstName: "Mariah", middle: "", lastName: "Carey", gender: "F", birth: "3/27/1969", death: "", verified: "" },
+                { firstName: "Karl", middle: "", lastName: "Bushby", gender: "M", birth: "3/30/1969", death: "", verified: "" },
+                { firstName: "Matthew", middle: "Lyn", lastName: "Lillard", gender: "M", birth: "1/24/1970", death: "", verified: "" },
+                { firstName: "Keith", middle: "", lastName: "Silverstein", gender: "M", birth: "12/24/1970", death: "", verified: "" },
+                { firstName: "David", middle: "John", lastName: "Tennant", gender: "M", birth: "4/18/1971", death: "", verified: "" },
+                { firstName: "Idina", middle: "Kim", lastName: "Menzel", gender: "F", birth: "5/30/1971", death: "", verified: "" },
+                { firstName: "Alan", middle: "", lastName: "Marriott", gender: "M", birth: "7/19/1971", death: "", verified: "" },
+                { firstName: "Samuel", middle: "Vincent", lastName: "Khouth", gender: "M", birth: "10/5/1971", death: "", verified: "" },
+                { firstName: "Kirby", middle: "Robert", lastName: "Morrow", gender: "M", birth: "8/28/1973", death: "11/18/2020", verified: "" },
+                { firstName: "Brian", middle: "", lastName: "Dobson", gender: "M", birth: "9/9/1973", death: "", verified: "" },
+                { firstName: "Jillian", middle: "Leigh", lastName: "McKarus", gender: "F", birth: "2/18/1974", death: "", verified: "" },
+                { firstName: "Tommy", middle: "", lastName: "Andreasen", gender: "M", birth: "4/21/1974", death: "", verified: "" },
+                { firstName: "Brent", middle: "Graeme", lastName: "Miller", gender: "M", birth: "10/28/1974", death: "", verified: "" },
+                { firstName: "Leonardo", middle: "Wilhelm", lastName: "DiCaprio", gender: "M", birth: "11/11/1974", death: "", verified: "" },
+                { firstName: "Thomas", middle: "", lastName: "Astruc", gender: "M", birth: "1/18/1975", death: "", verified: "" },
+                { firstName: "John", middle: "Patrick", lastName: "Ternus", gender: "M", birth: "5/19/1975", death: "", verified: "" },
+                { firstName: "Benedict", middle: "Timothy Carlton", lastName: "Cumberbatch", gender: "M", birth: "7/19/1976", death: "", verified: "" },
+                { firstName: "Thomas", middle: "Kirk", lastName: "Kristiansen", gender: "M", birth: "2/18/1979", death: "", verified: "" },
+                { firstName: "Lin-Manuel", middle: "", lastName: "Miranda", gender: "M", birth: "1/16/1980", death: "", verified: "" },
+                { firstName: "Vincent", middle: "", lastName: "Tong", gender: "M", birth: "5/2/1980", death: "", verified: "" },
+                { firstName: "Christopher", middle: "Robert", lastName: "Evans", gender: "M", birth: "6/13/1981", death: "", verified: "" },
+                { firstName: "Darrell", middle: "Lynn Bell", lastName: "Jr.", gender: "M", birth: "7/2/1981", death: "", verified: "" },
+                { firstName: "Michael", middle: "", lastName: "Adamthwaite", gender: "M", birth: "9/1/1981", death: "", verified: "" },
+                { firstName: "William", middle: "Arthur Philip Louis", lastName: "Windsor", gender: "M", birth: "6/21/1982", death: "", verified: "" },
+                { firstName: "Henry", middle: "William Dalgliesh", lastName: "Cavill", gender: "M", birth: "5/5/1983", death: "", verified: "" },
+                { firstName: "Matthew", middle: "Ryan", lastName: "Meese", gender: "M", birth: "10/10/1983", death: "", verified: "" },
+                { firstName: "Henry", middle: "Charles Albert David", lastName: "Windsor", gender: "M", birth: "9/15/1984", death: "", verified: "" },
+                { firstName: "Xdarzethx", middle: "/", lastName: "Darzeth", gender: "M", birth: "2/7/1985", death: "", verified: "" },
+                { firstName: "Natalie", middle: "Ellen Thomas", lastName: "Madsen", gender: "F", birth: "5/23/1985", death: "", verified: "" },
+                { firstName: "Andrew", middle: "Michael Scott", lastName: "Francis", gender: "M", birth: "5/27/1985", death: "", verified: "" },
+                { firstName: "Jeremy", middle: "Jesse", lastName: "Warner", gender: "M", birth: "7/18/1985", death: "", verified: "" },
+                { firstName: "Jason", middle: "Lee", lastName: "Gray", gender: "M", birth: "8/2/1985", death: "", verified: "" },
+                { firstName: "Michael", middle: "David", lastName: "Stevens", gender: "M", birth: "1/23/1986", death: "", verified: "" },
+                { firstName: "Matthew", middle: "Robert", lastName: "Patrick", gender: "M", birth: "11/15/1986", death: "", verified: "" },
+                { firstName: "James", middle: "", lastName: "Perry", gender: "M", birth: "2/27/1987", death: "", verified: "" },
+                { firstName: "Whitney", middle: "Marissa", lastName: "Call", gender: "F", birth: "6/2/1987", death: "", verified: "" },
+                { firstName: "Adam", middle: "Michael", lastName: "Berg", gender: "M", birth: "8/16/1988", death: "", verified: "" },
+                { firstName: "Stacey", middle: "Jerome", lastName: "Harkey", gender: "M", birth: "8/19/1988", death: "", verified: "" },
+                { firstName: "Stephen", middle: "", lastName: "Meek", gender: "M", birth: "11/19/1988", death: "", verified: "" },
+                { firstName: "Mallory", middle: "Ruthanne", lastName: "Everton", gender: "F", birth: "9/20/1989", death: "", verified: "" },
+                { firstName: "Christopher", middle: "Lund", lastName: "Nissen", gender: "M", birth: "1/31/1992", death: "", verified: "" },
+                { firstName: "Zachary", middle: "\"Zack\"", lastName: "Dziadul", gender: "M", birth: "12/28/1992", death: "", verified: "" },
+                { firstName: "Charles", middle: "James", lastName: "Kirk", gender: "M", birth: "10/14/1993", death: "9/10/2025", verified: "" },
+                { firstName: "Thomas", middle: "Stanley", lastName: "Holland", gender: "M", birth: "6/1/1996", death: "", verified: "" },
+                { firstName: "Sam", middle: "", lastName: "Beres", gender: "M", birth: "6/14/1996", death: "", verified: "" },
+                { firstName: "Craig", middle: "", lastName: "Fitzpatrick", gender: "M", birth: "10/22/1996", death: "", verified: "" },
+                { firstName: "KreekCraft", middle: "", lastName: "KreekCraft", gender: "M", birth: "1/28/1997", death: "", verified: "" },
+                { firstName: "Zachary", middle: "Neil", lastName: "Tarnopol", gender: "M", birth: "4/13/1998", death: "", verified: "" },
+                { firstName: "James", middle: "Stephen", lastName: "Donaldson", gender: "M", birth: "5/7/1998", death: "", verified: "" },
+                { firstName: "Lucas", middle: "Andrew", lastName: "Edwards", gender: "M", birth: "6/13/2000", death: "", verified: "" },
+                { firstName: "O1G", middle: "", lastName: "O1G", gender: "M", birth: "10/2/2000", death: "", verified: "" },
+                { firstName: "David", middle: "", lastName: "Jahn", gender: "M", birth: "8/11/2003", death: "", verified: "" },
+                { firstName: "John", middle: "", lastName: "Casterline", gender: "M", birth: "8/25/2003", death: "", verified: "" },
+                { firstName: "J.B.", middle: "", lastName: "Ryder", gender: "M", birth: "3/1/2007", death: "", verified: "" },
+                { firstName: "Levi", middle: "", lastName: "Bell", gender: "M", birth: "February 2010", death: "", verified: "" },
+                { firstName: "George", middle: "Alexander Louis", lastName: "Windsor", gender: "M", birth: "7/22/2013", death: "", verified: "" },
+                { firstName: "Charlotte", middle: "Elizabeth Diana", lastName: "Windsor", gender: "F", birth: "5/2/2015", death: "", verified: "" },
+                { firstName: "Louis", middle: "Arthur Charles", lastName: "Windsor", gender: "M", birth: "4/23/2018", death: "", verified: "" },
+                { firstName: "Archie", middle: "Harrison", lastName: "Mountbatten-Windsor", gender: "M", birth: "5/6/2019", death: "", verified: "" },
+                { firstName: "Lilibet", middle: "Diana", lastName: "Mountbatten-Windsor", gender: "F", birth: "6/4/2021", death: "", verified: "" }
             ];
+
             samples.forEach((s, idx) => {
                 const pBirth = parseHistoricalDate(s.birth);
                 const status = computeStatus(s.death);
                 const pDeath = status === "Deceased" ? parseHistoricalDate(s.death) : null;
-                const key = 'sample_' + idx + '_' + Date.now();
+                const key = 'sheet_all_' + idx + '_' + Date.now();
                 peopleDataMap[key] = {
                     firstName: s.firstName,
-                    middleName: s.middleName || s.middle || "",
+                    middleName: s.middle || "",
                     lastName: s.lastName,
                     gender: s.gender,
                     birthIso: pBirth.date.toISOString(),
@@ -666,9 +1033,20 @@
             saveToLocalStorage();
             renderTable();
         });
+
+        // Dynamically sync sticky table header offset with the search/controls bar height
+        const controlsEl = document.getElementById('controls-wrapper');
+        const syncStickyOffset = () => {
+            if (controlsEl && !controlsEl.classList.contains('hidden')) {
+                document.documentElement.style.setProperty('--controls-height', `${controlsEl.offsetHeight}px`);
+            }
+        };
+        new ResizeObserver(syncStickyOffset).observe(controlsEl);
+
         updateSubmitButtonState();
         renderTable();
         setInterval(renderTable, 1000);
     </script>
 </body>
 </html>
+
