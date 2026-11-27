@@ -818,18 +818,16 @@ setInterval(renderTable, 1000);
     name: "Longevity Archive",
     short_name: "Longevity",
     start_url: window.location.href,
+    scope: "./",
     display: "standalone",
     background_color: "#05070c",
     theme_color: "#05070c",
-    icons: [{ src: iconHref, sizes: "128x128", type: "image/png", purpose: "any maskable" }]
+    icons: [{ src: iconHref, sizes: "128x128", type: "image/png", purpose: "any" }]
   };
-  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-  document.getElementById('pwa-manifest').href = URL.createObjectURL(manifestBlob);
+  document.getElementById('pwa-manifest').href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
 
   if ('serviceWorker' in navigator) {
-    const swCode = `self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response(''))));`;
-    const swBlob = new Blob([swCode], { type: 'application/javascript' });
-    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
   let deferredPrompt = null;
